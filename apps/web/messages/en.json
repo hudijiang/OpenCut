@@ -1,0 +1,890 @@
+{
+	"assetPanel": {
+		"tabs": {
+			"media": "Media",
+			"sounds": "Sounds",
+			"text": "Text",
+			"stickers": "Stickers",
+			"effects": "Effects",
+			"transitions": "Transitions",
+			"captions": "Captions",
+			"adjustment": "Dubbing",
+			"settings": "Settings"
+		},
+		"transitionsComingSoon": "Transitions view coming soon..."
+	},
+	"editor": {
+		"languageSwitcher": {
+			"label": "Language",
+			"zh": "中文",
+			"en": "English"
+		},
+		"header": {
+			"projectThumbnailAlt": "Project thumbnail",
+			"exitProject": "Exit project",
+			"shortcuts": "Shortcuts",
+			"saveProjectTemplate": "Save project as template",
+			"saveSceneTemplate": "Save current scene as template",
+			"insertSceneTemplate": "Insert scene template",
+			"replaceSceneTemplate": "Replace current scene from template",
+			"discord": "Discord",
+			"renameError": "Failed to rename project",
+			"deleteError": "Failed to delete project",
+			"tryAgain": "Please try again"
+		},
+		"mobileGate": {
+			"goBack": "Go back",
+			"title": "Desktop only (for now)",
+			"description": "OpenCut isn't optimized for mobile or iPad yet. Things will break and the layout will be a mess. Come back on a desktop for the real experience.",
+			"continue": "Take a look anyway",
+			"roadmap": "Roadmap"
+		},
+		"provider": {
+			"untitledProject": "Untitled Project",
+			"createProjectError": "Failed to create project",
+			"loadProjectError": "Failed to load project",
+			"loadingProject": "Loading project...",
+			"exitingProject": "Exiting project..."
+		},
+		"degradedBanner": {
+			"message": "For the best experience, open OpenCut in Chrome.",
+			"dismiss": "Dismiss"
+		},
+		"export": {
+			"button": "Export",
+			"popoverTitle": "Export project",
+			"popoverTitleProgress": "Exporting project",
+			"format": "Format",
+			"formatMp4": "MP4 (H.264) - Better compatibility",
+			"formatWebm": "WebM (VP9) - Smaller file size",
+			"quality": "Quality",
+			"qualityLow": "Low - Smallest file size",
+			"qualityMedium": "Medium - Balanced",
+			"qualityHigh": "High - Recommended",
+			"qualityVeryHigh": "Very high - Largest file size",
+			"audio": "Audio",
+			"includeAudio": "Include audio in export",
+			"unknownError": "Unknown error occurred"
+		}
+	},
+	"captions": {
+		"title": "Captions",
+		"import": "Import",
+		"language": "Language",
+		"selectLanguage": "Select a language",
+		"autoDetect": "Auto detect",
+		"generateTranscript": "Generate transcript",
+		"transcribing": "Transcribing...",
+		"extractingAudio": "Extracting audio...",
+		"preparingAudio": "Preparing audio...",
+		"generatingCaptions": "Generating captions...",
+		"readingSubtitleFile": "Reading subtitle file...",
+		"importingSubtitles": "Importing subtitles...",
+		"noCaptionsGenerated": "No captions were generated",
+		"unexpectedError": "An unexpected error occurred",
+		"noValidSubtitleCues": "No valid subtitle cues were found in the subtitle file",
+		"importedWithSkipped": "Imported {importedCount} subtitle cue(s) and skipped {skippedCount} malformed cue(s)."
+	},
+	"dubbing": {
+		"title": "Dubbing",
+		"overview": {
+			"title": "Localized dubbing workflow",
+			"description": "Analyze your timeline audio, translate each speaker, synthesize a dubbed mix, and insert it back into the project.",
+			"sourceLanguage": "Source: {language}",
+			"targetLanguage": "Target: {language}",
+			"segments": "{count} segments",
+			"speakers": "{count} speakers",
+			"audioTracks": "{count} audio tracks",
+			"inProgress": "In progress",
+			"progressFallback": "{progress}% complete",
+			"running": "Running",
+			"ready": "Ready",
+			"pending": "Pending"
+		},
+		"apiKeys": {
+			"title": "API Keys",
+			"description": "Keys are stored in sessionStorage for this browser tab only.",
+			"assembly": "AssemblyAI API key",
+			"elevenLabs": "ElevenLabs API key",
+			"openAi": "OpenAI API key",
+			"placeholder": "API key",
+			"configurationNeeded": "Configuration Needed"
+		},
+		"analysis": {
+			"title": "Analyze Timeline",
+			"description": "Select the target language and run speaker diarization on the active timeline audio.",
+			"sourceLanguage": "Source language",
+			"targetLanguage": "Target language",
+			"chooseTargetLanguage": "Choose a target language",
+			"start": "Start Analysis",
+			"running": "Analyzing...",
+			"failed": "Analysis Failed",
+			"complete": "Analysis complete. Review and edit the transcript.",
+			"messages": {
+				"noActiveScene": "No active scene is available.",
+				"noAudio": "The current timeline does not have audible media.",
+				"extracting": "Extracting timeline audio...",
+				"decoding": "Decoding source audio...",
+				"submitting": "Submitting audio for diarization...",
+				"waiting": "Waiting for speaker diarization...",
+				"noSegments": "No diarized segments were returned.",
+				"failed": "Failed to analyze the timeline audio."
+			}
+		},
+		"transcript": {
+			"title": "Label Speakers & Edit Transcript",
+			"description": "Rename speakers and fix transcript lines before translation.",
+			"speakerLabelPlaceholder": "Speaker label",
+			"defaultSpeakerLabel": "Speaker {index}",
+			"translate": "Translate",
+			"translating": "Translating...",
+			"translationFailed": "Translation Failed",
+			"emptyState": "Run analysis to generate speaker segments."
+		},
+		"translation": {
+			"messages": {
+				"missingAnalysis": "Run analysis before translating.",
+				"missingApiKey": "OpenAI API key is required for translation.",
+				"translating": "Translating transcript segments...",
+				"applying": "Applying translated text...",
+				"complete": "Translation complete. Review the bilingual comparison.",
+				"failed": "Translation request failed."
+			}
+		},
+		"synthesis": {
+			"title": "Compare & Synthesize",
+			"description": "Review original and translated lines, then clone voices and render the dubbed audio.",
+			"synthesize": "Synthesize",
+			"synthesizing": "Synthesizing...",
+			"apply": "Apply dubbing to timeline",
+			"applying": "Applying...",
+			"rendered": "Rendered",
+			"estimated": "Estimated",
+			"sourceText": "Source text",
+			"translatedText": "Translated text",
+			"speakerProgress": "{count}% ready",
+			"slotDuration": "Slot: {duration}",
+			"messages": {
+				"missingSourceAudio": "Source audio is not ready. Run analysis again.",
+				"missingTranslations": "Translate every segment before synthesizing.",
+				"missingApiKey": "ElevenLabs API key is required for synthesis.",
+				"working": "Cloning voices and synthesizing segments...",
+				"segmentProgress": "Synthesizing segment {current} of {total}...",
+				"complete": "Dubbed audio is ready to apply to the timeline.",
+				"failed": "Voice cloning or synthesis failed.",
+				"cleanupWarning": "Dubbed audio is ready. Some temporary cloned voices could not be deleted.",
+				"waitingForTranslations": "Translate every segment to unlock synthesis."
+			}
+		},
+		"apply": {
+			"title": "Apply Dubbing",
+			"description": "Mute the original audio tracks and add the dubbed mix as a new timeline track.",
+			"dubbedSegments": "Dubbed Segments",
+			"mutedTracks": "Muted Tracks",
+			"newTrack": "New Track",
+			"newTrackValue": "1 dubbed audio track",
+			"dubbedSuffix": "Dubbed",
+			"messages": {
+				"missingContext": "An active project and scene are required.",
+				"missingAudio": "Synthesize every segment before applying the dubbing track.",
+				"buildingMix": "Building the dubbed mix...",
+				"importingAsset": "Importing the dubbed audio asset...",
+				"processAssetFailed": "Failed to process the dubbed audio asset.",
+				"saveAssetFailed": "Failed to save the dubbed audio asset.",
+				"mutingOriginal": "Muting the original timeline audio...",
+				"addingTrack": "Adding the new dubbing track...",
+				"complete": "Dubbing applied. The original audio tracks are muted.",
+				"failed": "Failed to apply dubbing."
+			}
+		},
+		"errors": {
+			"missingApiKeys": "Missing API keys: {providers}",
+			"encodeExtractedAudio": "Failed to encode the extracted audio",
+			"readExtractedAudio": "Failed to read the extracted audio",
+			"requestFailed": "Request failed with status {status}",
+			"missingTranslationForSegment": "Missing translation for segment {segmentId}.",
+			"noUsableVoiceSamples": "No usable voice samples were found for {speakerId}.",
+			"missingClonedVoice": "Missing cloned voice for {speakerId}."
+		},
+		"languages": {
+			"auto": "Auto detect",
+			"ar": "Arabic",
+			"de": "German",
+			"en": "English",
+			"es": "Spanish",
+			"fr": "French",
+			"hi": "Hindi",
+			"id": "Indonesian",
+			"it": "Italian",
+			"ja": "Japanese",
+			"ko": "Korean",
+			"ms": "Malay",
+			"nl": "Dutch",
+			"pl": "Polish",
+			"pt": "Portuguese",
+			"ru": "Russian",
+			"th": "Thai",
+			"tr": "Turkish",
+			"uk": "Ukrainian",
+			"vi": "Vietnamese",
+			"zh": "Chinese"
+		}
+	},
+	"effects": {
+		"title": "Effects",
+		"none": "No effects",
+		"emptyDescription": "Add effects to this layer from the Assets panel.",
+		"openEffects": "Open effects",
+		"names": {
+			"blur": "Blur",
+			"vignette": "Vignette",
+			"film-grain": "Film Grain",
+			"sharpen": "Sharpen",
+			"chromatic-aberration": "Chromatic Aberration"
+		}
+	},
+	"properties": {
+		"empty": {
+			"title": "It's empty here",
+			"description": "Click an element on the timeline to edit its properties"
+		},
+		"multipleSelected": "{count} elements selected.",
+		"tabs": {
+			"transform": "Transform",
+			"blending": "Blending",
+			"audio": "Audio",
+			"speed": "Speed",
+			"masks": "Masks",
+			"effects": "Effects",
+			"text": "Text",
+			"graphic": "Graphic"
+		}
+	},
+	"templates": {
+		"actions": {
+			"cancel": "Cancel",
+			"saveProject": "Save project template",
+			"saveScene": "Save scene template",
+			"saving": "Saving...",
+			"fromTemplate": "Templates",
+			"import": "Import",
+			"export": "Export",
+			"delete": "Delete",
+			"createProject": "Create project",
+			"insertScene": "Insert scene",
+			"replaceScene": "Replace current scene",
+			"applying": "Applying..."
+		},
+		"badges": {
+			"builtIn": "Built-in",
+			"user": "My template"
+		},
+		"library": {
+			"projectTitle": "Start From a Template",
+			"sceneInsertTitle": "Insert Scene Template",
+			"sceneReplaceTitle": "Replace Current Scene",
+			"projectDescription": "Create a new project from a built-in starter or one of your saved templates.",
+			"sceneDescription": "Insert a saved scene template into the current project, or replace the active scene with one.",
+			"templateCount": "{count} template(s)",
+			"slotCount": "{count} media slot(s)"
+		},
+		"fields": {
+			"name": "Template name",
+			"namePlaceholder": "Enter a template name",
+			"description": "Description",
+			"descriptionPlaceholder": "What is this template for?",
+			"includeExampleMedia": "Include current media as demo assets",
+			"includeExampleMediaHint": "Saved media becomes optional defaults. Anyone using the template can keep those files or replace them with their own.",
+			"projectName": "New project name",
+			"mediaSlots": "Media slots",
+			"required": "Required",
+			"optional": "Optional",
+			"autoFilled": "Auto-filled",
+			"optionalWithDefault": "Optional if you keep defaults"
+		},
+		"builtIn": {
+			"templates": {
+				"builtin-project-talking-head": {
+					"name": "Talking Head Starter",
+					"description": "A fast talking-head template for knowledge clips and quick social edits."
+				},
+				"builtin-project-photo-slideshow": {
+					"name": "Photo Slideshow Reel",
+					"description": "A five-photo slideshow starter for travel, memories, and recap edits."
+				},
+				"builtin-project-product-promo": {
+					"name": "Product Promo",
+					"description": "A clean commerce promo template for product hero shots and offers."
+				},
+				"builtin-project-podcast-clip": {
+					"name": "Podcast Clip",
+					"description": "A vertical clip layout for interviews, podcasts, and talking-head highlights."
+				},
+				"builtin-scene-cta": {
+					"name": "CTA Scene",
+					"description": "A closing call-to-action scene for follows, clicks, and link prompts."
+				},
+				"builtin-scene-meme-caption": {
+					"name": "Meme Caption Scene",
+					"description": "A classic top-and-bottom caption scene for memes and reaction content."
+				},
+				"builtin-scene-holiday-greeting": {
+					"name": "Holiday Greeting",
+					"description": "A festive greeting scene for holidays, birthdays, and anniversary wishes."
+				},
+				"builtin-scene-travel-opener": {
+					"name": "Travel Opener",
+					"description": "An opener scene for travel vlogs, destination edits, and city montages."
+				},
+				"builtin-scene-sale-announcement": {
+					"name": "Sale Announcement",
+					"description": "A promo scene for discounts, flash sales, and retail announcements."
+				},
+				"builtin-scene-before-after": {
+					"name": "Before / After",
+					"description": "A split-screen comparison scene for transformations and side-by-side reveals."
+				},
+				"builtin-project-ugc-testimonial": {
+					"name": "UGC Testimonial Ad",
+					"description": "A vertical testimonial ad template for creator-style reviews and social proof."
+				},
+				"builtin-project-app-demo": {
+					"name": "App Demo Walkthrough",
+					"description": "A clean app promo template for feature launches, onboarding, and walkthroughs."
+				},
+				"builtin-project-event-invite": {
+					"name": "Event Invite Promo",
+					"description": "A fast invite template for webinars, launches, meetups, and countdown teasers."
+				},
+				"builtin-project-tutorial-carousel": {
+					"name": "Tutorial Steps",
+					"description": "A step-by-step tutorial template for explainers, teaching clips, and workflows."
+				},
+				"builtin-scene-quote-card": {
+					"name": "Quote Card",
+					"description": "A quote scene for punchlines, takeaways, and reflective closing moments."
+				},
+				"builtin-scene-unboxing-highlight": {
+					"name": "Unboxing Highlight",
+					"description": "A reveal scene for first impressions, product drops, and unboxing moments."
+				},
+				"builtin-scene-recipe-card": {
+					"name": "Recipe Card",
+					"description": "A food scene for dish titles, recipe intros, and quick cooking highlights."
+				},
+				"builtin-scene-workout-progress": {
+					"name": "Workout Progress",
+					"description": "A progress scene for training logs, challenge updates, and fitness milestones."
+				},
+				"builtin-scene-news-flash": {
+					"name": "News Flash",
+					"description": "A breaking-news scene for short updates, alerts, and headline-driven clips."
+				},
+				"builtin-scene-creator-intro": {
+					"name": "Creator Intro",
+					"description": "An intro scene for creator branding, self-intros, and channel openers."
+				}
+			},
+			"slots": {
+				"slot-main-video": "Main video",
+				"slot-photo-1": "Photo 1",
+				"slot-photo-2": "Photo 2",
+				"slot-photo-3": "Photo 3",
+				"slot-photo-4": "Photo 4",
+				"slot-photo-5": "Photo 5",
+				"slot-product-media": "Product media",
+				"slot-podcast-video": "Podcast video",
+				"slot-scene-media": "Scene media",
+				"slot-meme-media": "Meme media",
+				"slot-greeting-media": "Greeting background",
+				"slot-travel-video": "Travel video",
+				"slot-sale-media": "Sale media",
+				"slot-before-media": "Before media",
+				"slot-after-media": "After media",
+				"slot-ugc-video": "UGC video",
+				"slot-app-demo-video": "Demo video",
+				"slot-event-media": "Event media",
+				"slot-step-1": "Step 1",
+				"slot-step-2": "Step 2",
+				"slot-step-3": "Step 3",
+				"slot-quote-bg": "Quote background",
+				"slot-unboxing-video": "Unboxing video",
+				"slot-recipe-media": "Recipe media",
+				"slot-workout-video": "Workout video",
+				"slot-news-media": "News visual",
+				"slot-creator-media": "Creator media"
+			},
+			"mediaTypes": {
+				"video": "Video",
+				"image": "Image",
+				"audio": "Audio"
+			}
+		},
+		"saveProject": {
+			"title": "Save Project Template",
+			"description": "Turn the current project into a reusable template with replaceable media slots."
+		},
+		"saveScene": {
+			"title": "Save Scene Template",
+			"description": "Save the current scene as a reusable template for future projects."
+		},
+		"defaults": {
+			"projectName": "Project Template",
+			"sceneName": "Scene Template"
+		},
+		"states": {
+			"loading": "Loading templates...",
+			"empty": "No templates yet.",
+			"noDescription": "No description provided.",
+			"selectTemplate": "Select a template to review its media slots.",
+			"noSlots": "This template does not require any media slots.",
+			"autoFilledSlot": "If you leave this empty, the app will insert a demo placeholder image that you can replace later.",
+			"missingRequiredSlots": "{count} required media slot(s) are still missing. Upload files first."
+		},
+		"success": {
+			"projectSaved": "Project template saved",
+			"sceneSaved": "Scene template saved",
+			"projectCreated": "Project created from template",
+			"sceneInserted": "Scene template inserted",
+			"sceneReplaced": "Current scene replaced from template",
+			"imported": "Template imported",
+			"deleted": "Template deleted"
+		},
+		"errors": {
+			"missingContext": "An active project is required.",
+			"nameRequired": "Template name is required.",
+			"missingRequiredSlots": "Fill the required media slots first",
+			"saveFailed": "Failed to save template",
+			"loadFailed": "Failed to load templates",
+			"applyFailed": "Failed to apply template",
+			"importFailed": "Failed to import template",
+			"exportFailed": "Failed to export template",
+			"deleteFailed": "Failed to delete template",
+			"tryAgain": "Please try again"
+		}
+	},
+	"site": {
+		"header": {
+			"logoAlt": "OpenCut Logo",
+			"copySvg": "Copy SVG",
+			"downloadSvg": "Download SVG",
+			"brandAssets": "Brand assets",
+			"projects": "Projects",
+			"closeMenu": "Close menu",
+			"links": {
+				"roadmap": "Roadmap",
+				"contributors": "Contributors",
+				"sponsors": "Sponsors",
+				"blog": "Blog"
+			}
+		},
+		"footer": {
+			"tagline": "The privacy-first video editor that feels simple to use.",
+			"sections": {
+				"resources": "Resources",
+				"company": "Company"
+			},
+			"links": {
+				"resources": {
+					"roadmap": "Roadmap",
+					"changelog": "Changelog",
+					"blog": "Blog",
+					"privacy": "Privacy",
+					"terms": "Terms of use"
+				},
+				"company": {
+					"contributors": "Contributors",
+					"sponsors": "Sponsors",
+					"brand": "Brand",
+					"about": "About"
+				}
+			},
+			"copyright": "© {year} OpenCut, All Rights Reserved"
+		},
+		"hero": {
+			"backgroundAlt": "OpenCut video editor landing page background",
+			"titleLineOne": "The open source",
+			"titleLineTwo": "Video editor",
+			"description": "A simple but powerful video editor that gets the job done. Works on any platform.",
+			"cta": "Try early beta"
+		},
+		"contribute": {
+			"start": "Start contributing",
+			"report": "Report issues"
+		}
+	},
+	"pages": {
+		"roadmap": {
+			"metadata": {
+				"title": "Roadmap - OpenCut",
+				"description": "See what's coming next for OpenCut - the free, open-source video editor that respects your privacy.",
+				"openGraphTitle": "OpenCut Roadmap - What's Coming Next",
+				"imageAlt": "OpenCut Roadmap"
+			},
+			"title": "Roadmap",
+			"description": "What's coming next for OpenCut (last updated: {lastUpdated})",
+			"lastUpdated": "February 25, 2026",
+			"statuses": {
+				"completed": "Completed",
+				"inProgress": "In progress",
+				"notStarted": "Not started"
+			},
+			"items": {
+				"start": {
+					"title": "Start",
+					"description": "This is where it all started. Repository created, initial project structure, and the vision for a free, open-source video editor. [Check out the first tweet](https://x.com/mazeincoding/status/1936706642512388188) to see where it started."
+				},
+				"coreUi": {
+					"title": "Core UI",
+					"description": "Build the foundation - main layout, header, sidebar, timeline container, and basic component structure. Not all functionality yet, but the UI framework that everything else builds on."
+				},
+				"essentialFunctionality": {
+					"title": "Essential functionality",
+					"description": "Everything that makes a video editor **useful**. Timeline interactivity, storage, effects, transitions, etc."
+				},
+				"nativeApp": {
+					"title": "Native app (mobile/desktop)",
+					"description": "Native OpenCut apps for Mac, Windows, Linux, and iOS/Android."
+				}
+			},
+			"contribute": {
+				"title": "Want to help?",
+				"description": "OpenCut is open source and built by the community. Every contribution, no matter how small, helps us build the best free video editor possible."
+			}
+		},
+		"contributors": {
+			"metadata": {
+				"title": "Contributors - OpenCut",
+				"description": "Meet the amazing people who contribute to OpenCut, the free and open-source video editor."
+			},
+			"title": "Contributors",
+			"description": "Meet the amazing people who contribute to OpenCut, the free and open-source video editor.",
+			"stats": {
+				"contributors": "contributors",
+				"contributions": "contributions"
+			},
+			"avatarAlt": "{name}'s avatar",
+			"topContributors": {
+				"title": "Top contributors",
+				"description": "Leading the way in contributions"
+			},
+			"allContributors": {
+				"title": "All contributors",
+				"description": "Everyone who makes OpenCut better"
+			},
+			"externalTools": {
+				"title": "External tools",
+				"description": "Tools we use to build OpenCut"
+			},
+			"contribute": {
+				"title": "Join the community",
+				"description": "OpenCut is built by developers like you. Every contribution, no matter how small, helps make video editing more accessible for everyone."
+			}
+		},
+		"sponsors": {
+			"metadata": {
+				"title": "Sponsors - OpenCut",
+				"description": "Support OpenCut and help us build the future of free and open-source video editing."
+			},
+			"title": "Sponsors",
+			"description": "Support OpenCut and help us build the future of privacy-first video editing.",
+			"logoAlt": "{name} logo"
+		},
+		"blog": {
+			"metadata": {
+				"title": "Blog - OpenCut",
+				"description": "Read the latest news and updates about OpenCut, the free and open-source video editor."
+			},
+			"title": "Blog",
+			"description": "Read the latest news and updates about OpenCut, the free and open-source video editor.",
+			"empty": "No posts yet"
+		},
+		"changelog": {
+			"metadata": {
+				"title": "Changelog - OpenCut",
+				"description": "What's new in OpenCut",
+				"openGraphDescription": "Every update, improvement, and fix to OpenCut — documented.",
+				"imageAlt": "OpenCut Changelog"
+			},
+			"title": "Changelog",
+			"description": "See what's new in OpenCut"
+		},
+		"release": {
+			"metadata": {
+				"title": "{title} ({version}) - OpenCut Changelog"
+			},
+			"allReleases": "All releases",
+			"older": "Older",
+			"newer": "Newer"
+		},
+		"projects": {
+			"breadcrumbs": {
+				"home": "Home",
+				"allProjects": "All projects"
+			},
+			"view": {
+				"grid": "Grid view",
+				"list": "List view"
+			},
+			"sort": {
+				"createdAt": "Created",
+				"updatedAt": "Modified",
+				"name": "Name",
+				"duration": "Duration",
+				"ascending": "Sort ascending",
+				"descending": "Sort descending"
+			},
+			"selectAll": "Select all",
+			"searchPlaceholder": "Search...",
+			"newProjectName": "New project",
+			"newProject": "New project",
+			"newShort": "New",
+			"projectThumbnailAlt": "Project thumbnail",
+			"createdOn": "Created {date}",
+			"durationFallback": "—",
+			"actions": {
+				"duplicate": "Duplicate",
+				"delete": "Delete",
+				"rename": "Rename",
+				"info": "Info",
+				"menu": "Project menu"
+			},
+			"errors": {
+				"createProject": "Failed to create project",
+				"tryAgain": "Please try again"
+			},
+			"empty": {
+				"searchTitle": "No results found",
+				"searchDescription": "Your search for \"{query}\" did not return any results.",
+				"clearSearch": "Clear search",
+				"noProjectsTitle": "No projects yet",
+				"noProjectsDescription": "Start creating your first project. Import media, edit, and export your videos. All privately.",
+				"createFirstProject": "Create your first project"
+			}
+		},
+		"brand": {
+			"title": "Brand",
+			"description": "Download OpenCut brand assets for use in your projects.",
+			"readGuidelines": "Read the brand guidelines.",
+			"downloadAll": "Download all",
+			"assetLabels": {
+				"symbol": "Symbol",
+				"logo": "Logo",
+				"text": "Text"
+			},
+			"sections": {
+				"symbol": {
+					"title": "Symbol",
+					"description": "Use the symbol on its own when the OpenCut name is already present nearby or space is limited."
+				},
+				"lockup": {
+					"title": "Lockup",
+					"description": "The full lockup combines the symbol and wordmark. Prefer this in most contexts where you have enough horizontal space."
+				}
+			},
+			"usage": {
+				"title": "Usage",
+				"description": "OpenCut is open source — the code is free to use under its license. That license does not cover the name or logo. You can say you use OpenCut, that your project integrates with OpenCut, or that it was built on top of OpenCut. You cannot name your product OpenCut, imply we made or endorse your product, or use the marks commercially without asking first. For anything unclear, reach out at",
+				"afterEmail": "."
+			},
+			"notAllowed": {
+				"title": "What's not allowed",
+				"items": [
+					"Using OpenCut in the name of your product, service, or domain.",
+					"Implying that OpenCut made, sponsors, or endorses your work.",
+					"Using the logo or name on merchandise or commercial marketing.",
+					"Modifying the marks."
+				]
+			},
+			"copy": "Copy",
+			"copied": "Copied"
+		},
+		"privacy": {
+			"metadata": {
+				"title": "Privacy Policy - OpenCut",
+				"description": "Learn how OpenCut handles your data and privacy. Our commitment to protecting your information while you edit videos."
+			},
+			"title": "Privacy policy",
+			"description": "Learn how we handle your data and privacy. Contact us if you have any questions.",
+			"quickSummary": {
+				"title": "Quick summary",
+				"heading": "Your content never leaves your device.",
+				"items": [
+					"Basic editing happens locally in your browser - we never see your files",
+					"AI features like auto captions run locally in your browser too - nothing is uploaded",
+					"OpenCut does not currently require an account or login",
+					"Project data stays on your device, not our servers",
+					"We use anonymized analytics to improve the app, but no personal video content is tracked",
+					"You can clear local data from your browser at any time",
+					"We don't sell or share your data with anyone (we don't even have it)"
+				],
+				"contactPrefix": "Questions? Email us at"
+			},
+			"content": {
+				"title": "How We Handle Your Content",
+				"lead": "All editing and processing happens locally on your device.",
+				"body": "We never upload, store, or have access to your video or audio files. Your content remains completely private and under your control. AI-powered features like auto captions also run in your browser using on-device models - no content ever leaves your device."
+			},
+			"accounts": {
+				"title": "Accounts & Authentication",
+				"p1": "OpenCut does not currently offer user accounts, login, or Google sign-in.",
+				"p2": "Because there is no account system today, we do not collect account emails, profile information, or OAuth identity data.",
+				"p3": "Your projects are never stored on our servers. All project data, including names, thumbnails, and creation dates, is stored locally in your browser using IndexedDB."
+			},
+			"analytics": {
+				"title": "Analytics",
+				"p1Before": "We use",
+				"p1After": "for basic, anonymized visitor counts. We do not track clicks, interactions, or how you use the editor.",
+				"p2": "No personal information is collected, no individual users are tracked, and no data that could identify you is stored."
+			},
+			"localStorage": {
+				"title": "Local Storage & Cookies",
+				"intro": "We use browser local storage and IndexedDB to:",
+				"items": [
+					"Save your projects locally on your device",
+					"Remember your editor preferences and settings",
+					"Store app state needed for the editor to work between sessions"
+				],
+				"outro": "All data stays on your device and can be cleared at any time through your browser settings."
+			},
+			"thirdParty": {
+				"title": "Third-Party Services",
+				"intro": "OpenCut integrates with these services:",
+				"items": [
+					"Vercel: For hosting and content delivery",
+					"Databuddy: For anonymized analytics"
+				]
+			},
+			"rights": {
+				"title": "Your Rights",
+				"intro": "You have complete control over your data:",
+				"items": [
+					"No account is required to use OpenCut today",
+					"Clear local storage to remove all saved projects",
+					"Contact us with any privacy concerns"
+				]
+			},
+			"transparency": {
+				"title": "Open Source Transparency",
+				"p1": "OpenCut is completely open source. You can review our code, see exactly how we handle data, and even self-host the application if you prefer.",
+				"p2Before": "View our source code on",
+				"github": "GitHub",
+				"p2After": "."
+			},
+			"contact": {
+				"title": "Contact Us",
+				"intro": "Questions about this privacy policy or how we handle your data?",
+				"beforeGithub": "Open an issue on our",
+				"github": "GitHub repository",
+				"beforeEmail": ", email us at",
+				"beforeX": ", or reach out on",
+				"x": "X (Twitter)",
+				"afterX": "."
+			},
+			"lastUpdated": "Last updated: March 15, 2026"
+		},
+		"terms": {
+			"metadata": {
+				"title": "Terms of Service - OpenCut",
+				"description": "OpenCut's Terms of Service. Fair, transparent terms for our free and open-source video editor."
+			},
+			"title": "Terms of service",
+			"description": "Fair and transparent terms for our free, open-source video editor. Contact us if you have any questions.",
+			"quickSummary": {
+				"title": "Quick summary",
+				"heading": "You own your content, we own nothing.",
+				"items": [
+					"Everything runs locally in your browser - nothing is ever uploaded to our servers",
+					"We never claim ownership of your content",
+					"Free for personal and commercial use with no watermarks or restrictions",
+					"You're responsible for how you use it - don't break the law",
+					"Service provided \"as is\" - we can't guarantee perfect uptime",
+					"Open source means you can review our code and self-host if needed",
+					"No account required - your exported videos are always yours"
+				],
+				"contactPrefix": "Questions? Email us at"
+			},
+			"rights": {
+				"title": "Your Content, Your Rights",
+				"lead": "You own everything you create.",
+				"body": "All editing and processing happens locally on your device. We never see, store, or have access to your files. We make no claims to ownership, licensing, or rights over your videos, projects, or any content you create using OpenCut.",
+				"items": [
+					"Your content never leaves your device",
+					"You retain all intellectual property rights to your content",
+					"You can export and use your content however you choose",
+					"No watermarks, no licensing restrictions from OpenCut"
+				]
+			},
+			"usage": {
+				"title": "How You Can Use OpenCut",
+				"intro": "OpenCut is free for personal and commercial use. You can:",
+				"items": [
+					"Create videos for personal, educational, or commercial purposes",
+					"Use OpenCut for client work and paid projects",
+					"Share and distribute videos created with OpenCut",
+					"Modify and distribute the OpenCut software (under MIT license)"
+				],
+				"outro": "You're responsible for how you use OpenCut and the content you create. Don't use it for anything illegal in your jurisdiction."
+			},
+			"ai": {
+				"title": "AI Features",
+				"body": "AI features like auto captions run entirely in your browser using on-device models. No content is uploaded to any server. These features are optional - you can use OpenCut without them."
+			},
+			"service": {
+				"title": "Service",
+				"body": "OpenCut does not currently require an account. The service is provided \"as is\" without warranties. While we strive for reliability, we can't guarantee uninterrupted service."
+			},
+			"openSource": {
+				"title": "Open Source Benefits",
+				"intro": "Because OpenCut is open source, you have additional rights:",
+				"items": [
+					"Review our code to see exactly how we handle your data",
+					"Self-host OpenCut on your own servers",
+					"Modify the software to suit your needs",
+					"Contribute improvements back to the community"
+				],
+				"beforeGithub": "View our source code and license on",
+				"github": "GitHub",
+				"afterGithub": "."
+			},
+			"limitations": {
+				"title": "Limitations and Liability",
+				"intro": "OpenCut is provided free of charge. To the extent permitted by law:",
+				"items": [
+					"We're not liable for any loss of data or content",
+					"Projects are stored in your browser and may be lost if you clear browser data",
+					"We're not responsible for how you use the service",
+					"Our liability is limited to the maximum extent allowed by law"
+				],
+				"outro": "Since your content stays on your device, we have no way to recover lost projects. Consider exporting important videos when finished editing."
+			},
+			"serviceChanges": {
+				"title": "Service Changes",
+				"intro": "We may update OpenCut and these terms:",
+				"items": [
+					"We'll notify you of significant changes to these terms",
+					"Continued use means you accept any updates",
+					"You can always self-host an older version if you prefer",
+					"Major changes will be discussed with the community on GitHub"
+				]
+			},
+			"stoppingUse": {
+				"title": "Stopping Use",
+				"intro": "You can stop using OpenCut at any time:",
+				"items": ["Clear your browser data to remove local projects"]
+			},
+			"contact": {
+				"title": "Contact Us",
+				"intro": "Questions about these terms or need to report an issue?",
+				"beforeGithub": "Contact us through our",
+				"github": "GitHub repository",
+				"beforeEmail": ", email us at",
+				"beforeX": ", or reach out on",
+				"x": "X (Twitter)",
+				"afterX": ".",
+				"outro": "These terms are governed by applicable law in your jurisdiction. We prefer to resolve disputes through friendly discussion in our open-source community."
+			},
+			"lastUpdated": "Last updated: March 15, 2026"
+		}
+	}
+}

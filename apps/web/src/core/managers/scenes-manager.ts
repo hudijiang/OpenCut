@@ -1,6 +1,7 @@
 import type { EditorCore } from "@/core";
 import type { SceneTracks, TScene } from "@/lib/timeline";
 import { storageService } from "@/services/storage/service";
+import type { MediaAsset } from "@/lib/media/types";
 import {
 	getMainScene,
 	ensureMainScene,
@@ -21,6 +22,7 @@ import {
 	ToggleBookmarkCommand,
 	UpdateBookmarkCommand,
 } from "@/lib/commands/scene";
+import type { SceneTemplateApplyMode } from "@/lib/templates/types";
 
 export class ScenesManager {
 	private active: TScene | null = null;
@@ -269,6 +271,11 @@ export class ScenesManager {
 			const updatedProject = {
 				...activeProject,
 				scenes,
+				currentSceneId:
+					nextActiveSceneId ??
+					activeProject.currentSceneId ??
+					scenes[0]?.id ??
+					"",
 				metadata: {
 					...activeProject.metadata,
 					updatedAt: new Date(),
@@ -276,6 +283,56 @@ export class ScenesManager {
 			};
 			this.editor.project.setActiveProject({ project: updatedProject });
 		}
+	}
+
+	async applyTemplateScene({
+		scene,
+		mediaAssets,
+		mode,
+	}: {
+		scene: TScene;
+		mediaAssets: Array<
+			MediaAsset & {
+				id: string;
+			}
+		>;
+		mode: SceneTemplateApplyMode;
+	}): Promise<void> {
+		const activeProject = this.editor.project.getActiveOrNull();
+		const activeScene = this.getActiveSceneOrNull();
+		if (!activeProject || !activeScene) {
+			throw new Error("An active project and scene are required");
+		}
+
+		await Promise.all(
+			mediaAssets.map((mediaAsset) =>
+				storageService.saveMediaAsset({
+					projectId: activeProject.metadata.id,
+					mediaAsset,
+				}),
+			),
+		);
+
+		const mergedAssets = [...this.editor.media.getAssets(), ...mediaAssets];
+		this.editor.media.setAssets({ assets: mergedAssets });
+
+		const nextScene: TScene = {
+			...scene,
+			isMain: mode === "replace-current" ? activeScene.isMain : false,
+			updatedAt: new Date(),
+		};
+
+		const nextScenes =
+			mode === "replace-current"
+				? this.list.map((candidate) =>
+						candidate.id === activeScene.id ? nextScene : candidate,
+					)
+				: [...this.list, nextScene];
+
+		this.setScenes({
+			scenes: nextScenes,
+			activeSceneId: nextScene.id,
+		});
 	}
 
 	subscribe(listener: () => void): () => void {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { PanelView } from "@/components/editor/panels/assets/views/base-panel";
 import { DraggableItem } from "@/components/editor/panels/assets/draggable-item";
 import { effectsRegistry, EFFECT_TARGET_ELEMENT_TYPES } from "@/lib/effects";
@@ -9,11 +10,20 @@ import { useEditor } from "@/hooks/use-editor";
 import { buildEffectElement } from "@/lib/timeline/element-utils";
 import type { EffectDefinition } from "@/lib/effects/types";
 
+const EFFECT_MESSAGE_KEYS = {
+	blur: "blur",
+	vignette: "vignette",
+	"film-grain": "film-grain",
+	sharpen: "sharpen",
+	"chromatic-aberration": "chromatic-aberration",
+} as const;
+
 export function EffectsView() {
+	const t = useTranslations("effects");
 	const effects = effectsRegistry.getAll();
 
 	return (
-		<PanelView title="Effects">
+		<PanelView title={t("title")}>
 			<EffectsGrid effects={effects} />
 		</PanelView>
 	);
@@ -54,7 +64,12 @@ function EffectPreviewCanvas({ effectType }: { effectType: string }) {
 }
 
 function EffectItem({ effect }: { effect: EffectDefinition }) {
+	const t = useTranslations("effects.names");
 	const editor = useEditor();
+	const effectName =
+		effect.type in EFFECT_MESSAGE_KEYS
+			? t(EFFECT_MESSAGE_KEYS[effect.type as keyof typeof EFFECT_MESSAGE_KEYS])
+			: effect.name;
 
 	const handleAddToTimeline = useCallback(() => {
 		const currentTime = editor.playback.getCurrentTime();
@@ -73,11 +88,11 @@ function EffectItem({ effect }: { effect: EffectDefinition }) {
 
 	return (
 		<DraggableItem
-			name={effect.name}
+			name={effectName}
 			preview={preview}
 			dragData={{
 				id: effect.type,
-				name: effect.name,
+				name: effectName,
 				type: "effect",
 				effectType: effect.type,
 				targetElementTypes: EFFECT_TARGET_ELEMENT_TYPES,

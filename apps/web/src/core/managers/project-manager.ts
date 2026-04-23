@@ -29,6 +29,7 @@ import { DEFAULTS } from "@/lib/timeline/defaults";
 import { getElementFontFamilies } from "@/lib/timeline/element-utils";
 import { getRaisedProjectFpsForImportedMedia } from "@/lib/fps/utils";
 import type { MediaAsset } from "@/lib/media/types";
+import type { TemplateProjectSnapshot } from "@/lib/templates/types";
 
 export interface MigrationState {
 	isMigrating: boolean;
@@ -481,6 +482,48 @@ export class ProjectManager {
 			});
 			throw error;
 		}
+	}
+
+	async createProjectFromTemplate({
+		project,
+		mediaAssets,
+		name,
+	}: {
+		project: TemplateProjectSnapshot;
+		mediaAssets: Array<
+			MediaAsset & {
+				id: string;
+			}
+		>;
+		name?: string;
+	}): Promise<string> {
+		const newProject: TProject = {
+			metadata: {
+				id: generateUUID(),
+				name: name?.trim() || project.name,
+				duration: getProjectDurationFromScenes({ scenes: project.scenes }),
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			},
+			scenes: project.scenes,
+			currentSceneId: project.currentSceneId,
+			settings: project.settings,
+			version: CURRENT_PROJECT_VERSION,
+			timelineViewState: project.timelineViewState,
+		};
+
+		await storageService.saveProject({ project: newProject });
+		await Promise.all(
+			mediaAssets.map((mediaAsset) =>
+				storageService.saveMediaAsset({
+					projectId: newProject.metadata.id,
+					mediaAsset,
+				}),
+			),
+		);
+
+		this.updateMetadata(newProject);
+		return newProject.metadata.id;
 	}
 
 	async updateSettings({

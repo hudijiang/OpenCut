@@ -1,0 +1,296 @@
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
+import { GitHubContributeSection } from "@/components/gitHub-contribute-section";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
+import { EXTERNAL_TOOLS } from "@/lib/site/external-tools";
+import { BasePage } from "../../base-page";
+
+type Props = {
+	params: Promise<{ locale: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+	const { locale } = await params;
+	const t = await getTranslations({
+		locale,
+		namespace: "pages.contributors.metadata",
+	});
+
+	return {
+		title: t("title"),
+		description: t("description"),
+		openGraph: {
+			title: t("title"),
+			description: t("description"),
+			type: "website",
+		},
+	};
+}
+
+interface Contributor {
+	id: number;
+	login: string;
+	avatar_url: string;
+	html_url: string;
+	contributions: number;
+	type: string;
+}
+
+async function getContributors(): Promise<Contributor[]> {
+	try {
+		const response = await fetch(
+			"https://api.github.com/repos/OpenCut-app/OpenCut/contributors?per_page=100",
+			{
+				headers: {
+					Accept: "application/vnd.github.v3+json",
+					"User-Agent": "OpenCut-Web-App",
+				},
+				next: { revalidate: 600 }, // 10 minutes
+			},
+		);
+
+		if (!response.ok) {
+			console.error("Failed to fetch contributors");
+			return [];
+		}
+
+		const contributors = (await response.json()) as Contributor[];
+
+		const filteredContributors = contributors.filter(
+			(contributor) => contributor.type === "User",
+		);
+
+		return filteredContributors;
+	} catch (error) {
+		console.error("Error fetching contributors:", error);
+		return [];
+	}
+}
+
+export default async function ContributorsPage() {
+	const t = await getTranslations("pages.contributors");
+	const contributors = await getContributors();
+	const topContributors = contributors.slice(0, 2);
+	const otherContributors = contributors.slice(2);
+	const totalContributions = contributors.reduce(
+		(sum, c) => sum + c.contributions,
+		0,
+	);
+
+	return (
+		<BasePage title={t("title")} description={t("description")}>
+			<div className="-mt-4 flex items-center justify-center gap-8 text-sm">
+				<StatItem value={contributors.length} label={t("stats.contributors")} />
+				<StatItem value={totalContributions} label={t("stats.contributions")} />
+			</div>
+
+			<div className="mx-auto flex max-w-6xl flex-col gap-20">
+				{topContributors.length > 0 && (
+					<TopContributorsSection
+						contributors={topContributors}
+						title={t("topContributors.title")}
+						description={t("topContributors.description")}
+						contributionsLabel={t("stats.contributions")}
+						avatarAlt={t("avatarAlt")}
+					/>
+				)}
+				{otherContributors.length > 0 && (
+					<AllContributorsSection
+						contributors={otherContributors}
+						title={t("allContributors.title")}
+						description={t("allContributors.description")}
+						avatarAlt={t("avatarAlt")}
+					/>
+				)}
+				<ExternalToolsSection
+					title={t("externalTools.title")}
+					description={t("externalTools.description")}
+				/>
+				<GitHubContributeSection
+					title={t("contribute.title")}
+					description={t("contribute.description")}
+				/>
+			</div>
+		</BasePage>
+	);
+}
+
+function StatItem({ value, label }: { value: number; label: string }) {
+	return (
+		<div className="flex items-center gap-2">
+			<div className="bg-foreground size-2 rounded-full" />
+			<span className="font-medium">{value}</span>
+			<span className="text-muted-foreground">{label}</span>
+		</div>
+	);
+}
+
+function TopContributorsSection({
+	contributors,
+	title,
+	description,
+	contributionsLabel,
+	avatarAlt,
+}: {
+	contributors: Contributor[];
+	title: string;
+	description: string;
+	contributionsLabel: string;
+	avatarAlt: string;
+}) {
+	return (
+		<div className="flex flex-col gap-10">
+			<div className="flex flex-col gap-2 text-center">
+				<h2 className="text-2xl font-semibold">{title}</h2>
+				<p className="text-muted-foreground">{description}</p>
+			</div>
+
+			<div className="mx-auto flex w-full max-w-xl flex-col justify-center gap-6 md:flex-row">
+				{contributors.map((contributor) => (
+					<TopContributorCard
+						key={contributor.id}
+						contributor={contributor}
+						contributionsLabel={contributionsLabel}
+						avatarAlt={avatarAlt}
+					/>
+				))}
+			</div>
+		</div>
+	);
+}
+
+function TopContributorCard({
+	contributor,
+	contributionsLabel,
+	avatarAlt,
+}: {
+	contributor: Contributor;
+	contributionsLabel: string;
+	avatarAlt: string;
+}) {
+	return (
+		<Link
+			href={contributor.html_url}
+			target="_blank"
+			rel="noopener noreferrer"
+			className="w-full"
+		>
+			<Card>
+				<CardContent className="flex flex-col gap-6 p-8 text-center">
+					<Avatar className="mx-auto size-28">
+						<AvatarImage
+							src={contributor.avatar_url}
+							alt={avatarAlt.replace("{name}", contributor.login)}
+						/>
+						<AvatarFallback className="text-lg font-semibold">
+							{contributor.login.charAt(0).toUpperCase()}
+						</AvatarFallback>
+					</Avatar>
+					<div className="flex flex-col gap-2">
+						<h3 className="text-xl font-semibold">{contributor.login}</h3>
+						<div className="flex items-center justify-center gap-2">
+							<span className="font-medium">{contributor.contributions}</span>
+							<span className="text-muted-foreground">
+								{contributionsLabel}
+							</span>
+						</div>
+					</div>
+				</CardContent>
+			</Card>
+		</Link>
+	);
+}
+
+function AllContributorsSection({
+	contributors,
+	title,
+	description,
+	avatarAlt,
+}: {
+	contributors: Contributor[];
+	title: string;
+	description: string;
+	avatarAlt: string;
+}) {
+	return (
+		<div className="flex flex-col gap-12">
+			<div className="flex flex-col gap-2 text-center">
+				<h2 className="text-2xl font-semibold">{title}</h2>
+				<p className="text-muted-foreground">{description}</p>
+			</div>
+
+			<div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+				{contributors.map((contributor) => (
+					<Link
+						key={contributor.id}
+						href={contributor.html_url}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="opacity-100 hover:opacity-70"
+					>
+						<div className="flex flex-col items-center gap-2 p-2">
+							<Avatar className="size-16">
+								<AvatarImage
+									src={contributor.avatar_url}
+									alt={avatarAlt.replace("{name}", contributor.login)}
+								/>
+								<AvatarFallback>
+									{contributor.login.charAt(0).toUpperCase()}
+								</AvatarFallback>
+							</Avatar>
+							<div className="text-center">
+								<h3 className="text-sm font-medium">{contributor.login}</h3>
+								<p className="text-muted-foreground text-xs">
+									{contributor.contributions}
+								</p>
+							</div>
+						</div>
+					</Link>
+				))}
+			</div>
+		</div>
+	);
+}
+
+function ExternalToolsSection({
+	title,
+	description,
+}: {
+	title: string;
+	description: string;
+}) {
+	return (
+		<div className="flex flex-col gap-10">
+			<div className="flex flex-col gap-2 text-center">
+				<h2 className="text-2xl font-semibold">{title}</h2>
+				<p className="text-muted-foreground">{description}</p>
+			</div>
+
+			<div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 sm:grid-cols-2">
+				{EXTERNAL_TOOLS.map((tool, index) => (
+					<Link
+						key={tool.url}
+						href={tool.url}
+						target="_blank"
+						className="block"
+						style={{ animationDelay: `${index * 100}ms` }}
+					>
+						<Card className="h-full">
+							<CardContent className="flex items-center justify-center h-full flex-col gap-4 p-6 text-center">
+								<tool.icon className="size-8" />
+								<div className="flex flex-1 flex-col gap-2">
+									<h3 className="text-lg font-semibold">{tool.name}</h3>
+									<p className="text-muted-foreground text-sm">
+										{tool.description}
+									</p>
+								</div>
+							</CardContent>
+						</Card>
+					</Link>
+				))}
+			</div>
+		</div>
+	);
+}

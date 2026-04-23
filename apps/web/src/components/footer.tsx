@@ -1,15 +1,15 @@
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { RiDiscordFill, RiTwitterXLine } from "react-icons/ri";
 import { FaGithub } from "react-icons/fa6";
 import Image from "next/image";
 import { DEFAULT_LOGO_URL } from "@/lib/site/brand";
 import { SOCIAL_LINKS } from "@/lib/site/social";
-import { capitalizeFirstLetter } from "@/utils/string";
 
 type Category = "resources" | "company";
 
 interface FooterLink {
-	label: string;
+	key: string;
 	href: string;
 }
 
@@ -17,21 +17,27 @@ type CategoryLinks = Record<Category, FooterLink[]>;
 
 const links: CategoryLinks = {
 	resources: [
-		{ label: "Roadmap", href: "/roadmap" },
-		{ label: "Changelog", href: "/changelog" },
-		{ label: "Blog", href: "/blog" },
-		{ label: "Privacy", href: "/privacy" },
-		{ label: "Terms of use", href: "/terms" },
+		{ key: "roadmap", href: "/roadmap" },
+		{ key: "changelog", href: "/changelog" },
+		{ key: "blog", href: "/blog" },
+		{ key: "privacy", href: "/privacy" },
+		{ key: "terms", href: "/terms" },
 	],
 	company: [
-		{ label: "Contributors", href: "/contributors" },
-		{ label: "Sponsors", href: "/sponsors" },
-		{ label: "Brand", href: "/brand" },
-		{ label: "About", href: `${SOCIAL_LINKS.github}/blob/main/README.md` },
+		{ key: "contributors", href: "/contributors" },
+		{ key: "sponsors", href: "/sponsors" },
+		{ key: "brand", href: "/brand" },
+		{ key: "about", href: `${SOCIAL_LINKS.github}/blob/main/README.md` },
 	],
 };
 
 export function Footer() {
+	return <TranslatedFooter />;
+}
+
+async function TranslatedFooter() {
+	const t = await getTranslations("site.footer");
+
 	return (
 		<footer className="bg-background border-t">
 			<div className="mx-auto max-w-5xl px-8 py-10">
@@ -49,7 +55,7 @@ export function Footer() {
 							<span className="text-lg font-bold">OpenCut</span>
 						</div>
 						<p className="text-muted-foreground mb-5 text-sm md:text-left">
-							The privacy-first video editor that feels simple to use.
+							{t("tagline")}
 						</p>
 						<div className="flex justify-start gap-3">
 							<Link
@@ -83,7 +89,9 @@ export function Footer() {
 						{(Object.keys(links) as Category[]).map((category) => (
 							<div key={category} className="flex flex-col gap-2">
 								<h3 className="text-foreground font-semibold">
-									{capitalizeFirstLetter({ string: category })}
+									{category === "resources"
+										? t("sections.resources")
+										: t("sections.company")}
 								</h3>
 								<ul className="space-y-2 text-sm">
 									{links[category].map((link) => (
@@ -100,7 +108,7 @@ export function Footer() {
 														: undefined
 												}
 											>
-												{link.label}
+												{t(`links.${category}.${link.key}`)}
 											</Link>
 										</li>
 									))}
@@ -113,9 +121,7 @@ export function Footer() {
 				{/* Bottom Section */}
 				<div className="flex flex-col items-start justify-between gap-4 pt-2 md:flex-row">
 					<div className="text-muted-foreground flex items-center gap-4 text-sm">
-						<span>
-							© {new Date().getFullYear()} OpenCut, All Rights Reserved
-						</span>
+						<span>{t("copyright", { year: new Date().getFullYear() })}</span>
 					</div>
 				</div>
 			</div>

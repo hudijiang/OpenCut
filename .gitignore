@@ -24,3 +24,9 @@ bun.lockb
 target/
 
 .cargo-tools/
+
+# Claude Code workspace
+.claude/
+
+# Large binary template assets (downloaded via script)
+apps/web/public/template-assets/

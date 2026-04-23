@@ -1,0 +1,887 @@
+{
+	"assetPanel": {
+		"tabs": {
+			"media": "媒体",
+			"sounds": "音效",
+			"text": "文字",
+			"stickers": "贴纸",
+			"effects": "效果",
+			"transitions": "转场",
+			"captions": "字幕",
+			"adjustment": "配音",
+			"settings": "设置"
+		},
+		"transitionsComingSoon": "转场面板即将上线..."
+	},
+	"editor": {
+		"languageSwitcher": {
+			"label": "语言",
+			"zh": "中文",
+			"en": "English"
+		},
+		"header": {
+			"projectThumbnailAlt": "项目缩略图",
+			"exitProject": "退出项目",
+			"shortcuts": "快捷键",
+			"saveProjectTemplate": "保存项目模板",
+			"saveSceneTemplate": "保存当前场景为模板",
+			"insertSceneTemplate": "插入场景模板",
+			"replaceSceneTemplate": "用模板替换当前场景",
+			"discord": "Discord",
+			"renameError": "重命名项目失败",
+			"deleteError": "删除项目失败",
+			"tryAgain": "请重试"
+		},
+		"mobileGate": {
+			"goBack": "返回",
+			"title": "当前仅支持桌面端",
+			"description": "OpenCut 暂未针对手机或 iPad 做优化。现在使用可能会出现功能异常和布局错乱，建议在桌面端获得完整体验。",
+			"continue": "仍然继续查看",
+			"roadmap": "路线图"
+		},
+		"provider": {
+			"untitledProject": "未命名项目",
+			"createProjectError": "创建项目失败",
+			"loadProjectError": "加载项目失败",
+			"loadingProject": "正在加载项目...",
+			"exitingProject": "正在退出项目..."
+		},
+		"degradedBanner": {
+			"message": "为获得最佳体验，请在 Chrome 中打开 OpenCut。",
+			"dismiss": "关闭"
+		},
+		"export": {
+			"button": "导出",
+			"popoverTitle": "导出项目",
+			"popoverTitleProgress": "正在导出项目",
+			"format": "格式",
+			"formatMp4": "MP4（H.264）- 兼容性更好",
+			"formatWebm": "WebM（VP9）- 文件更小",
+			"quality": "质量",
+			"qualityLow": "低 - 文件最小",
+			"qualityMedium": "中 - 平衡",
+			"qualityHigh": "高 - 推荐",
+			"qualityVeryHigh": "很高 - 文件最大",
+			"audio": "音频",
+			"includeAudio": "导出时包含音频",
+			"unknownError": "发生未知错误"
+		}
+	},
+	"captions": {
+		"title": "字幕",
+		"import": "导入",
+		"language": "语言",
+		"selectLanguage": "选择语言",
+		"autoDetect": "自动检测",
+		"generateTranscript": "生成转录",
+		"transcribing": "正在转录...",
+		"extractingAudio": "正在提取音频...",
+		"preparingAudio": "正在准备音频...",
+		"generatingCaptions": "正在生成字幕...",
+		"readingSubtitleFile": "正在读取字幕文件...",
+		"importingSubtitles": "正在导入字幕...",
+		"noCaptionsGenerated": "未生成任何字幕",
+		"unexpectedError": "发生意外错误",
+		"noValidSubtitleCues": "字幕文件中未找到有效的字幕条目",
+		"importedWithSkipped": "已导入 {importedCount} 条字幕，跳过 {skippedCount} 条格式错误的字幕。"
+	},
+	"dubbing": {
+		"title": "配音",
+		"overview": {
+			"title": "本地化配音流程",
+			"description": "分析时间线音频，逐位说话人翻译内容，合成配音混音，并重新插入项目中。",
+			"sourceLanguage": "源语言：{language}",
+			"targetLanguage": "目标语言：{language}",
+			"segments": "{count} 个片段",
+			"speakers": "{count} 位说话人",
+			"audioTracks": "{count} 条音轨",
+			"inProgress": "进行中",
+			"progressFallback": "已完成 {progress}%",
+			"running": "进行中",
+			"ready": "已就绪",
+			"pending": "待处理"
+		},
+		"apiKeys": {
+			"title": "API 密钥",
+			"description": "密钥仅保存在当前浏览器标签页的 sessionStorage 中。",
+			"assembly": "AssemblyAI API 密钥",
+			"elevenLabs": "ElevenLabs API 密钥",
+			"openAi": "OpenAI API 密钥",
+			"placeholder": "API 密钥",
+			"configurationNeeded": "需要配置"
+		},
+		"analysis": {
+			"title": "分析时间线",
+			"description": "选择目标语言，并对当前时间线音频执行说话人分离。",
+			"sourceLanguage": "源语言",
+			"targetLanguage": "目标语言",
+			"chooseTargetLanguage": "选择目标语言",
+			"start": "开始分析",
+			"running": "分析中...",
+			"failed": "分析失败",
+			"complete": "分析完成。请检查并编辑转录内容。",
+			"messages": {
+				"noActiveScene": "当前没有可用场景。",
+				"noAudio": "当前时间线上没有可听见的媒体。",
+				"extracting": "正在提取时间线音频...",
+				"decoding": "正在解码源音频...",
+				"submitting": "正在提交音频进行说话人分离...",
+				"waiting": "正在等待说话人分离结果...",
+				"noSegments": "没有返回任何说话人分段。",
+				"failed": "时间线音频分析失败。"
+			}
+		},
+		"transcript": {
+			"title": "标记说话人并编辑转录",
+			"description": "在翻译前重命名说话人并修正转录文本。",
+			"speakerLabelPlaceholder": "说话人名称",
+			"defaultSpeakerLabel": "说话人 {index}",
+			"translate": "翻译",
+			"translating": "翻译中...",
+			"translationFailed": "翻译失败",
+			"emptyState": "请先运行分析以生成说话人片段。"
+		},
+		"translation": {
+			"messages": {
+				"missingAnalysis": "请先完成分析再进行翻译。",
+				"missingApiKey": "翻译需要 OpenAI API 密钥。",
+				"translating": "正在翻译转录片段...",
+				"applying": "正在应用翻译文本...",
+				"complete": "翻译完成。请检查双语对照结果。",
+				"failed": "翻译请求失败。"
+			}
+		},
+		"synthesis": {
+			"title": "对照并合成",
+			"description": "检查原文与译文，然后克隆声音并渲染配音音频。",
+			"synthesize": "开始合成",
+			"synthesizing": "合成中...",
+			"apply": "将配音应用到时间线",
+			"applying": "应用中...",
+			"rendered": "实际渲染",
+			"estimated": "预计",
+			"sourceText": "原文",
+			"translatedText": "译文",
+			"speakerProgress": "完成度 {count}%",
+			"slotDuration": "时长：{duration}",
+			"messages": {
+				"missingSourceAudio": "源音频尚未准备好，请重新运行分析。",
+				"missingTranslations": "请先翻译所有片段再进行合成。",
+				"missingApiKey": "合成需要 ElevenLabs API 密钥。",
+				"working": "正在克隆声音并合成片段...",
+				"segmentProgress": "正在合成第 {current} / {total} 个片段...",
+				"complete": "配音音频已准备好，可应用到时间线。",
+				"failed": "声音克隆或合成失败。",
+				"cleanupWarning": "配音音频已准备好，但部分临时克隆声音未能删除。",
+				"waitingForTranslations": "请先翻译所有片段后再进行配音合成。"
+			}
+		},
+		"apply": {
+			"title": "应用配音",
+			"description": "静音原始音轨，并将配音混音作为新的时间线轨道添加进去。",
+			"dubbedSegments": "已配音片段",
+			"mutedTracks": "已静音轨道",
+			"newTrack": "新轨道",
+			"newTrackValue": "1 条配音音轨",
+			"dubbedSuffix": "配音",
+			"messages": {
+				"missingContext": "需要有活动项目和场景。",
+				"missingAudio": "请先合成所有片段后再应用配音轨道。",
+				"buildingMix": "正在构建配音混音...",
+				"importingAsset": "正在导入配音音频素材...",
+				"processAssetFailed": "处理配音音频素材失败。",
+				"saveAssetFailed": "保存配音音频素材失败。",
+				"mutingOriginal": "正在静音原始时间线音频...",
+				"addingTrack": "正在添加新的配音轨道...",
+				"complete": "配音已应用，原始音轨已被静音。",
+				"failed": "应用配音失败。"
+			}
+		},
+		"errors": {
+			"missingApiKeys": "缺少 API 密钥：{providers}",
+			"encodeExtractedAudio": "提取的音频编码失败",
+			"readExtractedAudio": "读取提取的音频失败",
+			"requestFailed": "请求失败，状态码 {status}",
+			"missingTranslationForSegment": "片段 {segmentId} 缺少翻译文本。",
+			"noUsableVoiceSamples": "未找到可用于 {speakerId} 的有效语音样本。",
+			"missingClonedVoice": "缺少 {speakerId} 的克隆声音。"
+		},
+		"languages": {
+			"auto": "自动检测",
+			"ar": "阿拉伯语",
+			"de": "德语",
+			"en": "英语",
+			"es": "西班牙语",
+			"fr": "法语",
+			"hi": "印地语",
+			"id": "印度尼西亚语",
+			"it": "意大利语",
+			"ja": "日语",
+			"ko": "韩语",
+			"ms": "马来语",
+			"nl": "荷兰语",
+			"pl": "波兰语",
+			"pt": "葡萄牙语",
+			"ru": "俄语",
+			"th": "泰语",
+			"tr": "土耳其语",
+			"uk": "乌克兰语",
+			"vi": "越南语",
+			"zh": "中文"
+		}
+	},
+	"effects": {
+		"title": "效果",
+		"none": "暂无效果",
+		"emptyDescription": "可从素材面板为这一层添加效果。",
+		"openEffects": "打开效果",
+		"names": {
+			"blur": "模糊",
+			"vignette": "暗角",
+			"film-grain": "胶片颗粒",
+			"sharpen": "锐化",
+			"chromatic-aberration": "色差"
+		}
+	},
+	"properties": {
+		"empty": {
+			"title": "这里还是空的",
+			"description": "点击时间线中的元素即可编辑其属性"
+		},
+		"multipleSelected": "已选择 {count} 个元素。",
+		"tabs": {
+			"transform": "变换",
+			"blending": "混合",
+			"audio": "音频",
+			"speed": "速度",
+			"masks": "蒙版",
+			"effects": "效果",
+			"text": "文字",
+			"graphic": "图形"
+		}
+	},
+	"templates": {
+		"actions": {
+			"cancel": "取消",
+			"saveProject": "保存项目模板",
+			"saveScene": "保存场景模板",
+			"saving": "保存中...",
+			"fromTemplate": "模板",
+			"import": "导入",
+			"export": "导出",
+			"delete": "删除",
+			"createProject": "创建项目",
+			"insertScene": "插入场景",
+			"replaceScene": "替换当前场景",
+			"applying": "应用中..."
+		},
+		"badges": {
+			"builtIn": "内置",
+			"user": "我的模板"
+		},
+		"library": {
+			"projectTitle": "从模板开始",
+			"sceneInsertTitle": "插入场景模板",
+			"sceneReplaceTitle": "替换当前场景",
+			"projectDescription": "从内置模板或你保存的模板创建新项目。",
+			"sceneDescription": "将已保存的场景模板插入当前项目，或直接替换当前场景。",
+			"templateCount": "{count} 个模板",
+			"slotCount": "{count} 个媒体槽位"
+		},
+		"fields": {
+			"name": "模板名称",
+			"namePlaceholder": "输入模板名称",
+			"description": "描述",
+			"descriptionPlaceholder": "这个模板适合做什么？",
+			"includeExampleMedia": "将当前素材一并保存为示例素材",
+			"includeExampleMediaHint": "保存后，这些素材会作为可保留的默认素材。使用模板的人既可以直接沿用，也可以替换成自己的素材。",
+			"projectName": "新项目名称",
+			"mediaSlots": "媒体槽位",
+			"required": "必填",
+			"optional": "可选",
+			"autoFilled": "自动补齐",
+			"optionalWithDefault": "保留默认素材时可选"
+		},
+		"builtIn": {
+			"templates": {
+				"builtin-project-talking-head": {
+					"name": "口播短视频",
+					"description": "适合知识分享和社媒快剪的口播模板，替换主视频后即可开始编辑。"
+				},
+				"builtin-project-photo-slideshow": {
+					"name": "照片轮播",
+					"description": "适合旅行、回忆和合集 recap 的五张照片轮播模板。"
+				},
+				"builtin-project-product-promo": {
+					"name": "产品宣传",
+					"description": "适合电商和产品卖点展示的简洁宣传模板。"
+				},
+				"builtin-project-podcast-clip": {
+					"name": "播客切片",
+					"description": "适合访谈、播客和对谈内容的竖屏片段模板。"
+				},
+				"builtin-scene-cta": {
+					"name": "行动号召结尾",
+					"description": "用于视频末尾引导关注、访问或点击的 CTA 场景模板。"
+				},
+				"builtin-scene-meme-caption": {
+					"name": "梗图字幕",
+					"description": "适合反应视频和 meme 内容的上下双字幕场景。"
+				},
+				"builtin-scene-holiday-greeting": {
+					"name": "节日祝福",
+					"description": "用于节日问候、生日祝福和纪念日贺卡的场景模板。"
+				},
+				"builtin-scene-travel-opener": {
+					"name": "旅行开场",
+					"description": "适合旅行 Vlog 和城市记录的开场场景。"
+				},
+				"builtin-scene-sale-announcement": {
+					"name": "促销通知",
+					"description": "用于折扣活动、限时优惠和大促海报视频的场景模板。"
+				},
+				"builtin-scene-before-after": {
+					"name": "前后对比",
+					"description": "适合改造、效果展示和产品对比的双画面对比模板。"
+				},
+				"builtin-project-ugc-testimonial": {
+					"name": "UGC 证言广告",
+					"description": "适合创作者口碑、用户反馈和社媒种草的竖屏广告模板。"
+				},
+				"builtin-project-app-demo": {
+					"name": "应用演示",
+					"description": "适合功能上新、产品 walkthrough 和快速上手介绍的模板。"
+				},
+				"builtin-project-event-invite": {
+					"name": "活动邀请",
+					"description": "适合直播预告、线下活动和 webinar 邀请的宣传模板。"
+				},
+				"builtin-project-tutorial-carousel": {
+					"name": "教程步骤",
+					"description": "适合教程拆解、教学步骤和操作演示的分步模板。"
+				},
+				"builtin-scene-quote-card": {
+					"name": "金句卡片",
+					"description": "适合观点表达、名言摘录和内容收尾的引用卡片场景。"
+				},
+				"builtin-scene-unboxing-highlight": {
+					"name": "开箱高光",
+					"description": "适合新品开箱和第一眼展示的高光场景。"
+				},
+				"builtin-scene-recipe-card": {
+					"name": "食谱卡片",
+					"description": "适合美食展示、菜谱标题和步骤开场的场景模板。"
+				},
+				"builtin-scene-workout-progress": {
+					"name": "健身进度",
+					"description": "适合训练记录、阶段打卡和成果更新的场景模板。"
+				},
+				"builtin-scene-news-flash": {
+					"name": "快讯播报",
+					"description": "适合新闻摘要、热点速递和突发信息提醒的场景模板。"
+				},
+				"builtin-scene-creator-intro": {
+					"name": "创作者介绍",
+					"description": "适合频道开头、自我介绍和个人品牌露出的开场模板。"
+				}
+			},
+			"slots": {
+				"slot-main-video": "主视频",
+				"slot-photo-1": "照片 1",
+				"slot-photo-2": "照片 2",
+				"slot-photo-3": "照片 3",
+				"slot-photo-4": "照片 4",
+				"slot-photo-5": "照片 5",
+				"slot-product-media": "产品素材",
+				"slot-podcast-video": "播客视频",
+				"slot-scene-media": "场景素材",
+				"slot-meme-media": "梗图素材",
+				"slot-greeting-media": "祝福背景",
+				"slot-travel-video": "旅行视频",
+				"slot-sale-media": "促销素材",
+				"slot-before-media": "对比前素材",
+				"slot-after-media": "对比后素材",
+				"slot-ugc-video": "UGC 视频",
+				"slot-app-demo-video": "演示视频",
+				"slot-event-media": "活动素材",
+				"slot-step-1": "步骤 1",
+				"slot-step-2": "步骤 2",
+				"slot-step-3": "步骤 3",
+				"slot-quote-bg": "引用背景",
+				"slot-unboxing-video": "开箱视频",
+				"slot-recipe-media": "菜品素材",
+				"slot-workout-video": "训练视频",
+				"slot-news-media": "新闻视觉素材",
+				"slot-creator-media": "创作者素材"
+			},
+			"mediaTypes": {
+				"video": "视频",
+				"image": "图片",
+				"audio": "音频"
+			}
+		},
+		"saveProject": {
+			"title": "保存项目模板",
+			"description": "把当前项目保存成可复用的模板，并自动抽出可替换的媒体槽位。"
+		},
+		"saveScene": {
+			"title": "保存场景模板",
+			"description": "把当前场景保存成之后可复用的模板。"
+		},
+		"defaults": {
+			"projectName": "项目模板",
+			"sceneName": "场景模板"
+		},
+		"states": {
+			"loading": "正在加载模板...",
+			"empty": "暂时还没有模板。",
+			"noDescription": "暂无描述。",
+			"selectTemplate": "选择一个模板后，可在这里查看它的媒体槽位。",
+			"noSlots": "这个模板不需要额外媒体槽位。",
+			"autoFilledSlot": "如果你不上传素材，系统会先自动放入一张示例占位图，后续可在编辑器里替换。",
+			"missingRequiredSlots": "还缺 {count} 个必填媒体槽位，请先上传素材。"
+		},
+		"success": {
+			"projectSaved": "项目模板已保存",
+			"sceneSaved": "场景模板已保存",
+			"projectCreated": "已通过模板创建项目",
+			"sceneInserted": "场景模板已插入",
+			"sceneReplaced": "当前场景已通过模板替换",
+			"imported": "模板已导入",
+			"deleted": "模板已删除"
+		},
+		"errors": {
+			"missingContext": "需要有一个活动项目。",
+			"nameRequired": "请输入模板名称。",
+			"missingRequiredSlots": "请先补齐必填媒体槽位",
+			"saveFailed": "保存模板失败",
+			"loadFailed": "加载模板失败",
+			"applyFailed": "应用模板失败",
+			"importFailed": "导入模板失败",
+			"exportFailed": "导出模板失败",
+			"deleteFailed": "删除模板失败",
+			"tryAgain": "请重试"
+		}
+	},
+	"site": {
+		"header": {
+			"logoAlt": "OpenCut 标志",
+			"copySvg": "复制 SVG",
+			"downloadSvg": "下载 SVG",
+			"brandAssets": "品牌资源",
+			"projects": "项目",
+			"closeMenu": "关闭菜单",
+			"links": {
+				"roadmap": "路线图",
+				"contributors": "贡献者",
+				"sponsors": "赞助商",
+				"blog": "博客"
+			}
+		},
+		"footer": {
+			"tagline": "一个以隐私为先、同时保持简单易用的视频编辑器。",
+			"sections": {
+				"resources": "资源",
+				"company": "项目"
+			},
+			"links": {
+				"resources": {
+					"roadmap": "路线图",
+					"changelog": "更新日志",
+					"blog": "博客",
+					"privacy": "隐私",
+					"terms": "使用条款"
+				},
+				"company": {
+					"contributors": "贡献者",
+					"sponsors": "赞助商",
+					"brand": "品牌",
+					"about": "关于"
+				}
+			},
+			"copyright": "© {year} OpenCut，保留所有权利"
+		},
+		"hero": {
+			"backgroundAlt": "OpenCut 视频编辑器落地页背景",
+			"titleLineOne": "开源的",
+			"titleLineTwo": "视频编辑器",
+			"description": "简单好用，也足够强大，能把工作完成。适用于任何平台。",
+			"cta": "体验早期 Beta"
+		},
+		"contribute": {
+			"start": "开始贡献",
+			"report": "反馈问题"
+		}
+	},
+	"pages": {
+		"roadmap": {
+			"metadata": {
+				"title": "路线图 - OpenCut",
+				"description": "看看 OpenCut 接下来会做什么 —— 一个尊重隐私的免费开源视频编辑器。",
+				"openGraphTitle": "OpenCut 路线图 - 接下来会做什么",
+				"imageAlt": "OpenCut 路线图"
+			},
+			"title": "路线图",
+			"description": "OpenCut 接下来会做什么（最后更新：{lastUpdated}）",
+			"lastUpdated": "2026 年 2 月 25 日",
+			"statuses": {
+				"completed": "已完成",
+				"inProgress": "进行中",
+				"notStarted": "未开始"
+			},
+			"items": {
+				"start": {
+					"title": "起点",
+					"description": "一切都从这里开始。仓库创建、初始项目结构，以及打造一款免费开源视频编辑器的愿景。[查看第一条推文](https://x.com/mazeincoding/status/1936706642512388188)，看看它最初的样子。"
+				},
+				"coreUi": {
+					"title": "核心 UI",
+					"description": "搭建基础框架，包括主布局、顶部栏、侧边栏、时间线容器以及基础组件结构。功能尚未全部完成，但这是后续所有能力的 UI 基底。"
+				},
+				"essentialFunctionality": {
+					"title": "核心功能",
+					"description": "那些让视频编辑器真正**有用**的能力：时间线交互、存储、效果、转场等。"
+				},
+				"nativeApp": {
+					"title": "原生应用（移动端/桌面端）",
+					"description": "为 Mac、Windows、Linux 以及 iOS/Android 提供原生 OpenCut 应用。"
+				}
+			},
+			"contribute": {
+				"title": "想一起帮忙吗？",
+				"description": "OpenCut 是一个由社区共同打造的开源项目。每一份贡献，无论多小，都能帮助我们做出更好的免费视频编辑器。"
+			}
+		},
+		"contributors": {
+			"metadata": {
+				"title": "贡献者 - OpenCut",
+				"description": "认识一下为 OpenCut 贡献力量的朋友们，这是一款免费开源的视频编辑器。"
+			},
+			"title": "贡献者",
+			"description": "认识一下为 OpenCut 贡献力量的朋友们，这是一款免费开源的视频编辑器。",
+			"stats": {
+				"contributors": "位贡献者",
+				"contributions": "次提交"
+			},
+			"avatarAlt": "{name} 的头像",
+			"topContributors": {
+				"title": "核心贡献者",
+				"description": "在贡献上走在最前面的人"
+			},
+			"allContributors": {
+				"title": "全部贡献者",
+				"description": "每一位让 OpenCut 变得更好的人"
+			},
+			"externalTools": {
+				"title": "外部工具",
+				"description": "我们用来构建 OpenCut 的工具"
+			},
+			"contribute": {
+				"title": "加入社区",
+				"description": "OpenCut 由像你一样的开发者共同打造。每一份贡献，无论多小，都在让视频编辑变得对更多人可用。"
+			}
+		},
+		"sponsors": {
+			"metadata": {
+				"title": "赞助商 - OpenCut",
+				"description": "支持 OpenCut，帮助我们共同构建免费开源视频编辑的未来。"
+			},
+			"title": "赞助商",
+			"description": "支持 OpenCut，帮助我们共同构建以隐私为先的视频编辑未来。",
+			"logoAlt": "{name} 标志"
+		},
+		"blog": {
+			"metadata": {
+				"title": "博客 - OpenCut",
+				"description": "阅读关于 OpenCut 的最新动态和更新，这是一款免费开源的视频编辑器。"
+			},
+			"title": "博客",
+			"description": "阅读关于 OpenCut 的最新动态和更新，这是一款免费开源的视频编辑器。",
+			"empty": "暂时还没有文章"
+		},
+		"changelog": {
+			"metadata": {
+				"title": "更新日志 - OpenCut",
+				"description": "看看 OpenCut 有哪些新变化",
+				"openGraphDescription": "OpenCut 的每一次更新、改进与修复，都记录在这里。",
+				"imageAlt": "OpenCut 更新日志"
+			},
+			"title": "更新日志",
+			"description": "查看 OpenCut 的最新变化"
+		},
+		"release": {
+			"metadata": {
+				"title": "{title}（{version}）- OpenCut 更新日志"
+			},
+			"allReleases": "全部版本",
+			"older": "更早",
+			"newer": "更新"
+		},
+		"projects": {
+			"breadcrumbs": {
+				"home": "首页",
+				"allProjects": "全部项目"
+			},
+			"view": {
+				"grid": "网格视图",
+				"list": "列表视图"
+			},
+			"sort": {
+				"createdAt": "创建时间",
+				"updatedAt": "修改时间",
+				"name": "名称",
+				"duration": "时长",
+				"ascending": "升序排序",
+				"descending": "降序排序"
+			},
+			"selectAll": "全选",
+			"searchPlaceholder": "搜索...",
+			"newProjectName": "新建项目",
+			"newProject": "新建项目",
+			"newShort": "新建",
+			"projectThumbnailAlt": "项目缩略图",
+			"createdOn": "创建于 {date}",
+			"durationFallback": "—",
+			"actions": {
+				"duplicate": "复制",
+				"delete": "删除",
+				"rename": "重命名",
+				"info": "信息",
+				"menu": "项目菜单"
+			},
+			"errors": {
+				"createProject": "创建项目失败",
+				"tryAgain": "请重试"
+			},
+			"empty": {
+				"searchTitle": "未找到结果",
+				"searchDescription": "未找到与 “{query}” 相关的项目。",
+				"clearSearch": "清除搜索",
+				"noProjectsTitle": "还没有项目",
+				"noProjectsDescription": "开始创建你的第一个项目吧。导入素材、编辑视频并导出，一切都在本地完成。",
+				"createFirstProject": "创建第一个项目"
+			}
+		},
+		"brand": {
+			"title": "品牌",
+			"description": "下载 OpenCut 品牌资源，用于你的项目中。",
+			"readGuidelines": "查看品牌使用指南。",
+			"downloadAll": "全部下载",
+			"assetLabels": {
+				"symbol": "符号",
+				"logo": "标志",
+				"text": "文字"
+			},
+			"sections": {
+				"symbol": {
+					"title": "符号",
+					"description": "当附近已经出现 OpenCut 名称，或者空间有限时，可单独使用符号。"
+				},
+				"lockup": {
+					"title": "组合标志",
+					"description": "完整组合标志由符号和文字标识组成。在大多数横向空间足够的场景下，优先使用这一版本。"
+				}
+			},
+			"usage": {
+				"title": "使用方式",
+				"description": "OpenCut 是开源项目，代码可在其许可证下自由使用，但该许可证不涵盖名称和标志。你可以说明自己在使用 OpenCut、项目与 OpenCut 集成，或项目基于 OpenCut 构建。你不能把自己的产品命名为 OpenCut、暗示你的产品由我们制作或背书，或在未获许可的情况下将这些标识用于商业用途。如有不清楚的情况，请联系",
+				"afterEmail": "。"
+			},
+			"notAllowed": {
+				"title": "不允许的用法",
+				"items": [
+					"在你的产品、服务或域名中使用 OpenCut 名称。",
+					"暗示你的作品由 OpenCut 制作、赞助或认可。",
+					"将标志或名称用于周边商品或商业营销。",
+					"修改这些标识。"
+				]
+			},
+			"copy": "复制",
+			"copied": "已复制"
+		},
+		"privacy": {
+			"metadata": {
+				"title": "隐私政策 - OpenCut",
+				"description": "了解 OpenCut 如何处理你的数据和隐私，以及我们在你编辑视频时如何保护你的信息。"
+			},
+			"title": "隐私政策",
+			"description": "了解我们如何处理你的数据与隐私。如有任何问题，请联系我们。",
+			"quickSummary": {
+				"title": "快速摘要",
+				"heading": "你的内容不会离开你的设备。",
+				"items": [
+					"基础编辑都在浏览器本地完成，我们看不到你的文件",
+					"自动字幕等 AI 功能也在浏览器本地运行，不会上传内容",
+					"OpenCut 目前不要求注册账号或登录",
+					"项目数据保存在你的设备上，而不是我们的服务器",
+					"我们使用匿名分析来改进应用，但不会追踪你的个人视频内容",
+					"你可以随时在浏览器中清除本地数据",
+					"我们不会出售或分享你的数据给任何人（实际上我们也拿不到）"
+				],
+				"contactPrefix": "有问题？请发邮件至"
+			},
+			"content": {
+				"title": "我们如何处理你的内容",
+				"lead": "所有编辑和处理都在你的设备本地完成。",
+				"body": "我们不会上传、存储，也无法访问你的视频或音频文件。你的内容始终完全私密并由你掌控。自动字幕等 AI 功能也会在浏览器中通过端侧模型运行，不会把任何内容传出设备。"
+			},
+			"accounts": {
+				"title": "账号与认证",
+				"p1": "OpenCut 目前不提供用户账号、登录或 Google 登录。",
+				"p2": "由于当前没有账号系统，我们不会收集账号邮箱、个人资料信息或 OAuth 身份数据。",
+				"p3": "你的项目不会存储在我们的服务器上。项目名称、缩略图、创建日期等所有项目数据都保存在浏览器本地的 IndexedDB 中。"
+			},
+			"analytics": {
+				"title": "分析统计",
+				"p1Before": "我们使用",
+				"p1After": "来统计基础且匿名的访问量。我们不会追踪点击、交互，或你如何使用编辑器。",
+				"p2": "我们不会收集个人信息，不会跟踪具体用户，也不会存储任何可用于识别你身份的数据。"
+			},
+			"localStorage": {
+				"title": "本地存储与 Cookie",
+				"intro": "我们会使用浏览器本地存储和 IndexedDB 来：",
+				"items": [
+					"将你的项目保存在本地设备上",
+					"记住编辑器偏好和设置",
+					"保存编辑器在多次会话之间所需的应用状态"
+				],
+				"outro": "所有数据都保存在你的设备上，你可以随时通过浏览器设置清除。"
+			},
+			"thirdParty": {
+				"title": "第三方服务",
+				"intro": "OpenCut 集成了以下服务：",
+				"items": ["Vercel：用于托管和内容分发", "Databuddy：用于匿名分析"]
+			},
+			"rights": {
+				"title": "你的权利",
+				"intro": "你对自己的数据拥有完整控制权：",
+				"items": [
+					"目前使用 OpenCut 不需要账号",
+					"清除本地存储即可移除所有已保存项目",
+					"如有任何隐私顾虑，都可以联系我们"
+				]
+			},
+			"transparency": {
+				"title": "开源透明性",
+				"p1": "OpenCut 完全开源。你可以查看我们的代码，清楚了解我们如何处理数据，甚至可以自行部署应用。",
+				"p2Before": "你可以在",
+				"github": "GitHub",
+				"p2After": "上查看我们的源代码。"
+			},
+			"contact": {
+				"title": "联系我们",
+				"intro": "如果你对本隐私政策或我们的数据处理方式有疑问：",
+				"beforeGithub": "可以在我们的",
+				"github": "GitHub 仓库",
+				"beforeEmail": "提交 issue，或发邮件至",
+				"beforeX": "，也可以通过",
+				"x": "X（Twitter）",
+				"afterX": "联系我们。"
+			},
+			"lastUpdated": "最后更新：2026 年 3 月 15 日"
+		},
+		"terms": {
+			"metadata": {
+				"title": "服务条款 - OpenCut",
+				"description": "OpenCut 的服务条款。为我们的免费开源视频编辑器提供公平且透明的使用说明。"
+			},
+			"title": "服务条款",
+			"description": "为我们的免费开源视频编辑器提供公平且透明的使用说明。如有任何问题，请联系我们。",
+			"quickSummary": {
+				"title": "快速摘要",
+				"heading": "你的内容归你所有，我们不拥有任何内容。",
+				"items": [
+					"所有内容都在浏览器本地运行，不会上传到我们的服务器",
+					"我们不会主张你内容的所有权",
+					"可免费用于个人和商业用途，没有水印或功能限制",
+					"你需要对自己的使用方式负责，请勿违法",
+					"服务按“现状”提供，我们无法保证绝对稳定在线",
+					"开源意味着你可以查看代码并在需要时自行部署",
+					"无需账号，你导出的视频始终属于你"
+				],
+				"contactPrefix": "有问题？请发邮件至"
+			},
+			"rights": {
+				"title": "你的内容，你的权利",
+				"lead": "你拥有自己创作的一切内容。",
+				"body": "所有编辑和处理都在你的设备本地完成。我们不会看到、存储，也无法访问你的文件。对于你使用 OpenCut 创建的视频、项目或任何内容，我们不主张任何所有权、许可权或权利。",
+				"items": [
+					"你的内容不会离开设备",
+					"你保留对内容的全部知识产权",
+					"你可以按自己的方式导出和使用内容",
+					"OpenCut 不会附加水印或许可限制"
+				]
+			},
+			"usage": {
+				"title": "你可以如何使用 OpenCut",
+				"intro": "OpenCut 可免费用于个人和商业用途。你可以：",
+				"items": [
+					"制作个人、教育或商业用途的视频",
+					"将 OpenCut 用于客户项目和付费工作",
+					"分享和分发使用 OpenCut 制作的视频",
+					"修改和分发 OpenCut 软件（遵循 MIT 许可证）"
+				],
+				"outro": "你需要对 OpenCut 的使用方式以及所创作内容负责。请勿将其用于你所在司法辖区内的任何非法用途。"
+			},
+			"ai": {
+				"title": "AI 功能",
+				"body": "自动字幕等 AI 功能完全在你的浏览器中通过端侧模型运行，不会把任何内容上传到服务器。这些功能是可选的，你也可以在不使用它们的情况下使用 OpenCut。"
+			},
+			"service": {
+				"title": "服务",
+				"body": "OpenCut 当前不要求账号。服务按“现状”提供，不附带任何担保。虽然我们会尽力保持可靠，但无法保证服务始终不中断。"
+			},
+			"openSource": {
+				"title": "开源带来的额外权利",
+				"intro": "由于 OpenCut 是开源项目，你还拥有以下额外权利：",
+				"items": [
+					"查看代码，了解我们如何处理你的数据",
+					"在你自己的服务器上自行部署 OpenCut",
+					"按你的需求修改软件",
+					"将改进贡献回社区"
+				],
+				"beforeGithub": "你可以在",
+				"github": "GitHub",
+				"afterGithub": "上查看我们的源代码和许可证。"
+			},
+			"limitations": {
+				"title": "限制与责任",
+				"intro": "OpenCut 免费提供。在法律允许的最大范围内：",
+				"items": [
+					"我们不对任何数据或内容丢失负责",
+					"项目保存在浏览器中，若清除浏览器数据可能导致丢失",
+					"我们不对你的使用方式负责",
+					"我们的责任以法律允许的最大范围为限"
+				],
+				"outro": "由于你的内容始终保存在设备本地，我们无法帮你恢复丢失的项目。建议在完成编辑后及时导出重要视频。"
+			},
+			"serviceChanges": {
+				"title": "服务变更",
+				"intro": "我们可能会更新 OpenCut 以及这些条款：",
+				"items": [
+					"若条款有重大变化，我们会通知你",
+					"继续使用即表示你接受这些更新",
+					"如果你愿意，也可以自行部署旧版本",
+					"重大变化会在 GitHub 社区中公开讨论"
+				]
+			},
+			"stoppingUse": {
+				"title": "停止使用",
+				"intro": "你可以随时停止使用 OpenCut：",
+				"items": ["清除浏览器数据即可移除本地项目"]
+			},
+			"contact": {
+				"title": "联系我们",
+				"intro": "如果你对这些条款有疑问，或需要反馈问题：",
+				"beforeGithub": "可以通过我们的",
+				"github": "GitHub 仓库",
+				"beforeEmail": "联系我们，或发邮件至",
+				"beforeX": "，也可以通过",
+				"x": "X（Twitter）",
+				"afterX": "与我们联系。",
+				"outro": "这些条款受你所在司法辖区适用法律约束。我们更倾向于通过开源社区中的友好沟通来解决争议。"
+			},
+			"lastUpdated": "最后更新：2026 年 3 月 15 日"
+		}
+	}
+}

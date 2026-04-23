@@ -9,3 +9,5 @@ path = "src/main.rs"
 
 [dependencies]
 gpui = "0.2.2"
+rust-i18n = "3"
+sys-locale = "0.3"

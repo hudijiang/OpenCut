@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
 	Tooltip,
 	TooltipContent,
@@ -15,6 +16,7 @@ import {
 } from "@/stores/assets-panel-store";
 
 export function TabBar() {
+	const t = useTranslations("assetPanel.tabs");
 	const { activeTab, setActiveTab } = useAssetsPanelStore();
 	const [showTopFade, setShowTopFade] = useState(false);
 	const [showBottomFade, setShowBottomFade] = useState(false);
@@ -53,13 +55,14 @@ export function TabBar() {
 			>
 				{TAB_KEYS.map((tabKey) => {
 					const tab = tabs[tabKey];
+					const label = t(tab.labelKey);
 					return (
 						<Tooltip key={tabKey} delayDuration={10}>
 							<TooltipTrigger asChild>
 								<Button
 									variant={activeTab === tabKey ? "secondary" : "ghost"}
 									size="icon"
-									aria-label={tab.label}
+									aria-label={label}
 									className={cn(
 										"shrink-0",
 										"h-8 w-8",
@@ -77,7 +80,7 @@ export function TabBar() {
 								sideOffset={8}
 							>
 								<div className="text-foreground text-sm leading-none font-medium">
-									{tab.label}
+									{label}
 								</div>
 							</TooltipContent>
 						</Tooltip>

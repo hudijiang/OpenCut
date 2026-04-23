@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +17,7 @@ import { cn } from "@/utils/ui";
 import { EmptyView } from "./empty-view";
 
 export function PropertiesPanel() {
+	const t = useTranslations("properties");
 	const editor = useEditor();
 	useEditor((e) => e.scenes.getActiveSceneOrNull());
 	useEditor((e) => e.media.getAssets());
@@ -34,7 +36,7 @@ export function PropertiesPanel() {
 		return (
 			<div className="panel bg-background flex h-full flex-col items-center justify-center overflow-hidden rounded-sm border">
 				<p className="text-muted-foreground text-sm">
-					{selectedElements.length} elements selected.0
+					{t("multipleSelected", { count: selectedElements.length })}
 				</p>
 			</div>
 		);
@@ -50,7 +52,20 @@ export function PropertiesPanel() {
 	if (!elementWithTrack) return null;
 
 	const { element, track } = elementWithTrack;
-	const config = getPropertiesConfig({ element, mediaAssets });
+	const config = getPropertiesConfig({
+		element,
+		mediaAssets,
+		labels: {
+			transform: t("tabs.transform"),
+			blending: t("tabs.blending"),
+			audio: t("tabs.audio"),
+			speed: t("tabs.speed"),
+			masks: t("tabs.masks"),
+			effects: t("tabs.effects"),
+			text: t("tabs.text"),
+			graphic: t("tabs.graphic"),
+		},
+	});
 	const visibleTabs = config.tabs;
 
 	const storedTabId = activeTabPerType[element.type];

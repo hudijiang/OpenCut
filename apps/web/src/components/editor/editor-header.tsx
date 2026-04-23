@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Button } from "../ui/button";
 import { useRef, useState } from "react";
 import {
@@ -9,10 +10,9 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import Link from "next/link";
+import { Link, useRouter } from "@/i18n/navigation";
 import { RenameProjectDialog } from "./dialogs/rename-project-dialog";
 import { DeleteProjectDialog } from "./dialogs/delete-project-dialog";
-import { useRouter } from "next/navigation";
 import { FaDiscord } from "react-icons/fa6";
 import { ExportButton } from "./export-button";
 import { FeedbackPopover } from "@/lib/feedback/components/feedback-popover";
@@ -26,6 +26,9 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { ShortcutsDialog } from "./dialogs/shortcuts-dialog";
 import Image from "next/image";
 import { cn } from "@/utils/ui";
+import { LanguageSwitcher } from "./language-switcher";
+import { SaveTemplateDialog } from "@/components/templates/save-template-dialog";
+import { TemplateLibraryDialog } from "@/components/templates/template-library-dialog";
 
 export function EditorHeader() {
 	return (
@@ -35,6 +38,7 @@ export function EditorHeader() {
 				<EditableProjectName />
 			</div>
 			<nav className="flex items-center gap-2">
+				<LanguageSwitcher />
 				<FeedbackPopover />
 				<ExportButton />
 				<ThemeToggle />
@@ -44,9 +48,18 @@ export function EditorHeader() {
 }
 
 function ProjectDropdown() {
+	const t = useTranslations("editor.header");
 	const [openDialog, setOpenDialog] = useState<
 		"delete" | "rename" | "shortcuts" | null
 	>(null);
+	const [isSaveProjectTemplateOpen, setIsSaveProjectTemplateOpen] =
+		useState(false);
+	const [isSaveSceneTemplateOpen, setIsSaveSceneTemplateOpen] = useState(false);
+	const [isSceneTemplateLibraryOpen, setIsSceneTemplateLibraryOpen] =
+		useState(false);
+	const [sceneTemplateMode, setSceneTemplateMode] = useState<
+		"insert" | "replace-current"
+	>("insert");
 	const [isExiting, setIsExiting] = useState(false);
 	const router = useRouter();
 	const editor = useEditor();
@@ -59,8 +72,6 @@ function ProjectDropdown() {
 		try {
 			await editor.project.prepareExit();
 			editor.project.closeProject();
-		} catch (error) {
-			console.error("Failed to prepare project exit:", error);
 		} finally {
 			editor.project.closeProject();
 			router.push("/projects");
@@ -79,9 +90,8 @@ function ProjectDropdown() {
 					name: newName.trim(),
 				});
 			} catch (error) {
-				toast.error("Failed to rename project", {
-					description:
-						error instanceof Error ? error.message : "Please try again",
+				toast.error(t("renameError"), {
+					description: error instanceof Error ? error.message : t("tryAgain"),
 				});
 			} finally {
 				setOpenDialog(null);
@@ -97,9 +107,8 @@ function ProjectDropdown() {
 				});
 				router.push("/projects");
 			} catch (error) {
-				toast.error("Failed to delete project", {
-					description:
-						error instanceof Error ? error.message : "Please try again",
+				toast.error(t("deleteError"), {
+					description: error instanceof Error ? error.message : t("tryAgain"),
 				});
 			} finally {
 				setOpenDialog(null);
@@ -114,7 +123,7 @@ function ProjectDropdown() {
 					<Button variant="ghost" size="icon" className="p-1 rounded-sm size-8">
 						<Image
 							src={DEFAULT_LOGO_URL}
-							alt="Project thumbnail"
+							alt={t("projectThumbnailAlt")}
 							width={32}
 							height={32}
 							className="invert dark:invert-0 size-5"
@@ -127,14 +136,42 @@ function ProjectDropdown() {
 						disabled={isExiting}
 						icon={<HugeiconsIcon icon={Logout05Icon} />}
 					>
-						Exit project
+						{t("exitProject")}
 					</DropdownMenuItem>
 
 					<DropdownMenuItem
 						onClick={() => setOpenDialog("shortcuts")}
 						icon={<HugeiconsIcon icon={CommandIcon} />}
 					>
-						Shortcuts
+						{t("shortcuts")}
+					</DropdownMenuItem>
+
+					<DropdownMenuSeparator />
+
+					<DropdownMenuItem onClick={() => setIsSaveProjectTemplateOpen(true)}>
+						{t("saveProjectTemplate")}
+					</DropdownMenuItem>
+
+					<DropdownMenuItem onClick={() => setIsSaveSceneTemplateOpen(true)}>
+						{t("saveSceneTemplate")}
+					</DropdownMenuItem>
+
+					<DropdownMenuItem
+						onClick={() => {
+							setSceneTemplateMode("insert");
+							setIsSceneTemplateLibraryOpen(true);
+						}}
+					>
+						{t("insertSceneTemplate")}
+					</DropdownMenuItem>
+
+					<DropdownMenuItem
+						onClick={() => {
+							setSceneTemplateMode("replace-current");
+							setIsSceneTemplateLibraryOpen(true);
+						}}
+					>
+						{t("replaceSceneTemplate")}
 					</DropdownMenuItem>
 
 					<DropdownMenuSeparator />
@@ -145,7 +182,7 @@ function ProjectDropdown() {
 							target="_blank"
 							rel="noopener noreferrer"
 						>
-							Discord
+							{t("discord")}
 						</Link>
 					</DropdownMenuItem>
 				</DropdownMenuContent>
@@ -166,11 +203,28 @@ function ProjectDropdown() {
 				isOpen={openDialog === "shortcuts"}
 				onOpenChange={(isOpen) => setOpenDialog(isOpen ? "shortcuts" : null)}
 			/>
+			<SaveTemplateDialog
+				open={isSaveProjectTemplateOpen}
+				onOpenChange={setIsSaveProjectTemplateOpen}
+				target="project"
+			/>
+			<SaveTemplateDialog
+				open={isSaveSceneTemplateOpen}
+				onOpenChange={setIsSaveSceneTemplateOpen}
+				target="scene"
+			/>
+			<TemplateLibraryDialog
+				open={isSceneTemplateLibraryOpen}
+				onOpenChange={setIsSceneTemplateLibraryOpen}
+				kind="scene"
+				mode={sceneTemplateMode}
+			/>
 		</>
 	);
 }
 
 function EditableProjectName() {
+	const t = useTranslations("editor.header");
 	const editor = useEditor();
 	const activeProject = useEditor((e) => e.project.getActive());
 	const [isEditing, setIsEditing] = useState(false);
@@ -206,9 +260,8 @@ function EditableProjectName() {
 					name: newName,
 				});
 			} catch (error) {
-				toast.error("Failed to rename project", {
-					description:
-						error instanceof Error ? error.message : "Please try again",
+				toast.error(t("renameError"), {
+					description: error instanceof Error ? error.message : t("tryAgain"),
 				});
 			}
 		}

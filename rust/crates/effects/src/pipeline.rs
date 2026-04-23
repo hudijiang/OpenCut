@@ -10,6 +10,18 @@ use crate::{EffectPass, UniformValue};
 const GAUSSIAN_BLUR_SHADER_ID: &str = "gaussian-blur";
 const GAUSSIAN_BLUR_SHADER_SOURCE: &str = include_str!("shaders/gaussian_blur.wgsl");
 
+const VIGNETTE_SHADER_ID: &str = "vignette";
+const VIGNETTE_SHADER_SOURCE: &str = include_str!("shaders/vignette.wgsl");
+
+const FILM_GRAIN_SHADER_ID: &str = "film-grain";
+const FILM_GRAIN_SHADER_SOURCE: &str = include_str!("shaders/film_grain.wgsl");
+
+const SHARPEN_SHADER_ID: &str = "sharpen";
+const SHARPEN_SHADER_SOURCE: &str = include_str!("shaders/sharpen.wgsl");
+
+const CHROMATIC_ABERRATION_SHADER_ID: &str = "chromatic-aberration";
+const CHROMATIC_ABERRATION_SHADER_SOURCE: &str = include_str!("shaders/chromatic_aberration.wgsl");
+
 pub struct ApplyEffectsOptions<'a> {
     pub source: &'a wgpu::Texture,
     pub width: u32,
@@ -84,6 +96,34 @@ impl EffectPipeline {
                     label: Some("effects-gaussian-blur-shader"),
                     source: wgpu::ShaderSource::Wgsl(GAUSSIAN_BLUR_SHADER_SOURCE.into()),
                 });
+        let vignette_shader_module =
+            context
+                .device()
+                .create_shader_module(wgpu::ShaderModuleDescriptor {
+                    label: Some("effects-vignette-shader"),
+                    source: wgpu::ShaderSource::Wgsl(VIGNETTE_SHADER_SOURCE.into()),
+                });
+        let film_grain_shader_module =
+            context
+                .device()
+                .create_shader_module(wgpu::ShaderModuleDescriptor {
+                    label: Some("effects-film-grain-shader"),
+                    source: wgpu::ShaderSource::Wgsl(FILM_GRAIN_SHADER_SOURCE.into()),
+                });
+        let sharpen_shader_module =
+            context
+                .device()
+                .create_shader_module(wgpu::ShaderModuleDescriptor {
+                    label: Some("effects-sharpen-shader"),
+                    source: wgpu::ShaderSource::Wgsl(SHARPEN_SHADER_SOURCE.into()),
+                });
+        let chromatic_aberration_shader_module =
+            context
+                .device()
+                .create_shader_module(wgpu::ShaderModuleDescriptor {
+                    label: Some("effects-chromatic-aberration-shader"),
+                    source: wgpu::ShaderSource::Wgsl(CHROMATIC_ABERRATION_SHADER_SOURCE.into()),
+                });
         let pipeline_layout =
             context
                 .device()
@@ -95,11 +135,12 @@ impl EffectPipeline {
                     ],
                     immediate_size: 0,
                 });
-        let gaussian_blur_pipeline =
+
+        let make_pipeline = |label: &'static str, shader_module: &wgpu::ShaderModule| {
             context
                 .device()
                 .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-                    label: Some("effects-gaussian-blur-pipeline"),
+                    label: Some(label),
                     layout: Some(&pipeline_layout),
                     vertex: wgpu::VertexState {
                         module: &vertex_shader_module,
@@ -116,7 +157,7 @@ impl EffectPipeline {
                         compilation_options: wgpu::PipelineCompilationOptions::default(),
                     },
                     fragment: Some(wgpu::FragmentState {
-                        module: &gaussian_blur_shader_module,
+                        module: shader_module,
                         entry_point: Some("fragment_main"),
                         targets: &[Some(wgpu::ColorTargetState {
                             format: context.texture_format(),
@@ -130,9 +171,31 @@ impl EffectPipeline {
                     multisample: wgpu::MultisampleState::default(),
                     multiview_mask: None,
                     cache: None,
-                });
-        let pipelines =
-            HashMap::from([(GAUSSIAN_BLUR_SHADER_ID.to_string(), gaussian_blur_pipeline)]);
+                })
+        };
+
+        let gaussian_blur_pipeline =
+            make_pipeline("effects-gaussian-blur-pipeline", &gaussian_blur_shader_module);
+        let vignette_pipeline =
+            make_pipeline("effects-vignette-pipeline", &vignette_shader_module);
+        let film_grain_pipeline =
+            make_pipeline("effects-film-grain-pipeline", &film_grain_shader_module);
+        let sharpen_pipeline = make_pipeline("effects-sharpen-pipeline", &sharpen_shader_module);
+        let chromatic_aberration_pipeline = make_pipeline(
+            "effects-chromatic-aberration-pipeline",
+            &chromatic_aberration_shader_module,
+        );
+
+        let pipelines = HashMap::from([
+            (GAUSSIAN_BLUR_SHADER_ID.to_string(), gaussian_blur_pipeline),
+            (VIGNETTE_SHADER_ID.to_string(), vignette_pipeline),
+            (FILM_GRAIN_SHADER_ID.to_string(), film_grain_pipeline),
+            (SHARPEN_SHADER_ID.to_string(), sharpen_pipeline),
+            (
+                CHROMATIC_ABERRATION_SHADER_ID.to_string(),
+                chromatic_aberration_pipeline,
+            ),
+        ]);
 
         Self {
             uniform_bind_group_layout,
@@ -267,26 +330,102 @@ fn pack_effect_uniforms(
     width: u32,
     height: u32,
 ) -> Result<EffectUniformBuffer, EffectsError> {
-    let shader = pass.shader.as_str();
+    match pass.shader.as_str() {
+        GAUSSIAN_BLUR_SHADER_ID => pack_gaussian_blur_uniforms(pass, width, height),
+        VIGNETTE_SHADER_ID => pack_vignette_uniforms(pass, width, height),
+        FILM_GRAIN_SHADER_ID => pack_film_grain_uniforms(pass, width, height),
+        SHARPEN_SHADER_ID => pack_sharpen_uniforms(pass, width, height),
+        CHROMATIC_ABERRATION_SHADER_ID => pack_chromatic_aberration_uniforms(pass, width, height),
+        shader => Err(EffectsError::UnknownEffectShader {
+            shader: shader.to_string(),
+        }),
+    }
+}
+
+fn pack_gaussian_blur_uniforms(
+    pass: &EffectPass,
+    width: u32,
+    height: u32,
+) -> Result<EffectUniformBuffer, EffectsError> {
     let sigma = read_number_uniform(pass, "u_sigma")?;
     let step = read_number_uniform(pass, "u_step")?;
     let direction = read_vec2_uniform(pass, "u_direction")?;
-
-    for uniform in pass.uniforms.keys() {
-        if uniform == "u_sigma" || uniform == "u_step" || uniform == "u_direction" {
-            continue;
-        }
-        return Err(EffectsError::UnsupportedUniform {
-            shader: shader.to_string(),
-            uniform: uniform.clone(),
-        });
-    }
-
+    reject_unknown_uniforms(pass, &["u_sigma", "u_step", "u_direction"])?;
     Ok(EffectUniformBuffer {
         resolution: [width as f32, height as f32],
         direction,
         scalars: [sigma, step, 0.0, 0.0],
     })
+}
+
+fn pack_vignette_uniforms(
+    pass: &EffectPass,
+    width: u32,
+    height: u32,
+) -> Result<EffectUniformBuffer, EffectsError> {
+    let intensity = read_number_uniform(pass, "u_intensity")?;
+    let softness = read_number_uniform(pass, "u_softness")?;
+    reject_unknown_uniforms(pass, &["u_intensity", "u_softness"])?;
+    Ok(EffectUniformBuffer {
+        resolution: [width as f32, height as f32],
+        direction: [0.0, 0.0],
+        scalars: [intensity, softness, 0.0, 0.0],
+    })
+}
+
+fn pack_film_grain_uniforms(
+    pass: &EffectPass,
+    width: u32,
+    height: u32,
+) -> Result<EffectUniformBuffer, EffectsError> {
+    let intensity = read_number_uniform(pass, "u_intensity")?;
+    let seed = read_number_uniform(pass, "u_seed")?;
+    reject_unknown_uniforms(pass, &["u_intensity", "u_seed"])?;
+    Ok(EffectUniformBuffer {
+        resolution: [width as f32, height as f32],
+        direction: [0.0, 0.0],
+        scalars: [intensity, seed, 0.0, 0.0],
+    })
+}
+
+fn pack_sharpen_uniforms(
+    pass: &EffectPass,
+    width: u32,
+    height: u32,
+) -> Result<EffectUniformBuffer, EffectsError> {
+    let amount = read_number_uniform(pass, "u_amount")?;
+    reject_unknown_uniforms(pass, &["u_amount"])?;
+    Ok(EffectUniformBuffer {
+        resolution: [width as f32, height as f32],
+        direction: [0.0, 0.0],
+        scalars: [amount, 0.0, 0.0, 0.0],
+    })
+}
+
+fn pack_chromatic_aberration_uniforms(
+    pass: &EffectPass,
+    width: u32,
+    height: u32,
+) -> Result<EffectUniformBuffer, EffectsError> {
+    let intensity = read_number_uniform(pass, "u_intensity")?;
+    reject_unknown_uniforms(pass, &["u_intensity"])?;
+    Ok(EffectUniformBuffer {
+        resolution: [width as f32, height as f32],
+        direction: [0.0, 0.0],
+        scalars: [intensity, 0.0, 0.0, 0.0],
+    })
+}
+
+fn reject_unknown_uniforms(pass: &EffectPass, known: &[&str]) -> Result<(), EffectsError> {
+    for uniform in pass.uniforms.keys() {
+        if !known.contains(&uniform.as_str()) {
+            return Err(EffectsError::UnsupportedUniform {
+                shader: pass.shader.clone(),
+                uniform: uniform.clone(),
+            });
+        }
+    }
+    Ok(())
 }
 
 fn read_number_uniform(pass: &EffectPass, uniform: &str) -> Result<f32, EffectsError> {
@@ -327,4 +466,151 @@ fn read_vec2_uniform(pass: &EffectPass, uniform: &str) -> Result<[f32; 2], Effec
         });
     }
     Ok([values[0], values[1]])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn effect_pass(shader: &str, uniforms: &[(&str, UniformValue)]) -> EffectPass {
+        let uniforms = uniforms
+            .iter()
+            .map(|(key, value)| ((*key).to_string(), value.clone()))
+            .collect();
+
+        EffectPass {
+            shader: shader.to_string(),
+            uniforms,
+        }
+    }
+
+    #[test]
+    fn pack_vignette_uniforms_with_normal_params() {
+        let pass = effect_pass(
+            VIGNETTE_SHADER_ID,
+            &[
+                ("u_intensity", UniformValue::Number(0.5)),
+                ("u_softness", UniformValue::Number(0.5)),
+            ],
+        );
+
+        let packed = pack_vignette_uniforms(&pass, 1920, 1080).expect("should pack vignette");
+
+        assert_eq!(packed.resolution, [1920.0, 1080.0]);
+        assert_eq!(packed.direction, [0.0, 0.0]);
+        assert_eq!(packed.scalars, [0.5, 0.5, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn pack_vignette_uniforms_allows_zero_softness() {
+        let pass = effect_pass(
+            VIGNETTE_SHADER_ID,
+            &[
+                ("u_intensity", UniformValue::Number(0.5)),
+                ("u_softness", UniformValue::Number(0.0)),
+            ],
+        );
+
+        let packed = pack_vignette_uniforms(&pass, 640, 360).expect("should pack vignette");
+
+        assert_eq!(packed.resolution, [640.0, 360.0]);
+        assert_eq!(packed.scalars, [0.5, 0.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn pack_vignette_uniforms_returns_error_when_uniform_is_missing() {
+        let pass = effect_pass(
+            VIGNETTE_SHADER_ID,
+            &[("u_intensity", UniformValue::Number(0.5))],
+        );
+
+        match pack_vignette_uniforms(&pass, 1920, 1080) {
+            Err(EffectsError::MissingUniform { shader, uniform }) => {
+                assert_eq!(shader, VIGNETTE_SHADER_ID);
+                assert_eq!(uniform, "u_softness");
+            }
+            Ok(_) => panic!("expected missing softness error, got Ok(_)"),
+            Err(error) => panic!("expected missing softness error, got {error}"),
+        }
+    }
+
+    #[test]
+    fn pack_vignette_uniforms_rejects_unknown_uniforms() {
+        let pass = effect_pass(
+            VIGNETTE_SHADER_ID,
+            &[
+                ("u_intensity", UniformValue::Number(0.5)),
+                ("u_softness", UniformValue::Number(0.5)),
+                ("u_feather", UniformValue::Number(0.3)),
+            ],
+        );
+
+        match pack_vignette_uniforms(&pass, 1920, 1080) {
+            Err(EffectsError::UnsupportedUniform { shader, uniform }) => {
+                assert_eq!(shader, VIGNETTE_SHADER_ID);
+                assert_eq!(uniform, "u_feather");
+            }
+            Ok(_) => panic!("expected unsupported uniform error, got Ok(_)"),
+            Err(error) => panic!("expected unsupported uniform error, got {error}"),
+        }
+    }
+
+    #[test]
+    fn pack_film_grain_uniforms_with_normal_params() {
+        let pass = effect_pass(
+            FILM_GRAIN_SHADER_ID,
+            &[
+                ("u_intensity", UniformValue::Number(0.15)),
+                ("u_seed", UniformValue::Number(24.0)),
+            ],
+        );
+
+        let packed = pack_film_grain_uniforms(&pass, 1280, 720).expect("should pack film grain");
+
+        assert_eq!(packed.resolution, [1280.0, 720.0]);
+        assert_eq!(packed.direction, [0.0, 0.0]);
+        assert_eq!(packed.scalars, [0.15, 24.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn pack_sharpen_uniforms_with_normal_params() {
+        let pass = effect_pass(
+            SHARPEN_SHADER_ID,
+            &[("u_amount", UniformValue::Number(0.75))],
+        );
+
+        let packed = pack_sharpen_uniforms(&pass, 800, 600).expect("should pack sharpen");
+
+        assert_eq!(packed.resolution, [800.0, 600.0]);
+        assert_eq!(packed.direction, [0.0, 0.0]);
+        assert_eq!(packed.scalars, [0.75, 0.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn pack_chromatic_aberration_uniforms_with_normal_params() {
+        let pass = effect_pass(
+            CHROMATIC_ABERRATION_SHADER_ID,
+            &[("u_intensity", UniformValue::Number(3.0))],
+        );
+
+        let packed =
+            pack_chromatic_aberration_uniforms(&pass, 1024, 768).expect("should pack chromatic");
+
+        assert_eq!(packed.resolution, [1024.0, 768.0]);
+        assert_eq!(packed.direction, [0.0, 0.0]);
+        assert_eq!(packed.scalars, [3.0, 0.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn pack_effect_uniforms_rejects_unknown_shader() {
+        let pass = effect_pass("unknown-shader", &[]);
+
+        match pack_effect_uniforms(&pass, 1920, 1080) {
+            Err(EffectsError::UnknownEffectShader { shader }) => {
+                assert_eq!(shader, "unknown-shader");
+            }
+            Ok(_) => panic!("expected unknown shader error, got Ok(_)"),
+            Err(error) => panic!("expected unknown shader error, got {error}"),
+        }
+    }
 }

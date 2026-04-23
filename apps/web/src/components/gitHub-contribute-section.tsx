@@ -1,16 +1,19 @@
+import { getTranslations } from "next-intl/server";
 import { Button } from "./ui/button";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { SOCIAL_LINKS } from "@/lib/site/social";
 import { GithubIcon, Link04Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
-export function GitHubContributeSection({
+export async function GitHubContributeSection({
 	title,
 	description,
 }: {
 	title: string;
 	description: string;
 }) {
+	const t = await getTranslations("site.contribute");
+
 	return (
 		<div className="flex flex-col gap-6">
 			<div className="flex flex-col gap-4 text-center">
@@ -25,7 +28,7 @@ export function GitHubContributeSection({
 				>
 					<Button className="w-full" size="lg">
 						<HugeiconsIcon icon={GithubIcon} />
-						Start contributing
+						{t("start")}
 					</Button>
 				</Link>
 				<Link
@@ -35,7 +38,7 @@ export function GitHubContributeSection({
 				>
 					<Button variant="outline" className="w-full" size="lg">
 						<HugeiconsIcon icon={Link04Icon} />
-						Report issues
+						{t("report")}
 					</Button>
 				</Link>
 			</div>

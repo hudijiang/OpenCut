@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { motion } from "motion/react";
 import { Button } from "./ui/button";
 import { ArrowRight } from "lucide-react";
@@ -16,7 +17,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/utils/ui";
-import { DEFAULT_LOGO_URL, SITE_URL } from "@/lib/site/brand";
+import { DEFAULT_LOGO_URL } from "@/lib/site/brand";
 import { SOCIAL_LINKS } from "@/lib/site/social";
 import {
 	ContextMenu,
@@ -26,24 +27,25 @@ import {
 } from "./ui/context-menu";
 
 export function Header() {
+	const t = useTranslations("site.header");
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const closeMenu = () => setIsMenuOpen(false);
 
 	const links = [
 		{
-			label: "Roadmap",
+			label: t("links.roadmap"),
 			href: "/roadmap",
 		},
 		{
-			label: "Contributors",
+			label: t("links.contributors"),
 			href: "/contributors",
 		},
 		{
-			label: "Sponsors",
+			label: t("links.sponsors"),
 			href: "/sponsors",
 		},
 		{
-			label: "Blog",
+			label: t("links.blog"),
 			href: "/blog",
 		},
 	];
@@ -57,7 +59,7 @@ export function Header() {
 							<Link href="/" className="flex items-center gap-3">
 								<Image
 									src={DEFAULT_LOGO_URL}
-									alt="OpenCut Logo"
+									alt={t("logoAlt")}
 									className="invert dark:invert-0"
 									width={32}
 									height={32}
@@ -73,7 +75,7 @@ export function Header() {
 								}}
 							>
 								<HugeiconsIcon icon={Copy01Icon} />
-								Copy SVG
+								{t("copySvg")}
 							</ContextMenuItem>
 							<ContextMenuItem
 								onClick={() => {
@@ -84,12 +86,12 @@ export function Header() {
 								}}
 							>
 								<HugeiconsIcon icon={Download01Icon} />
-								Download SVG
+								{t("downloadSvg")}
 							</ContextMenuItem>
 							<Link href="/brand">
 								<ContextMenuItem>
 									<HugeiconsIcon icon={LinkSquare02Icon} />
-									Brand assets
+									{t("brandAssets")}
 								</ContextMenuItem>
 							</Link>
 						</ContextMenuContent>
@@ -126,7 +128,7 @@ export function Header() {
 						</Link>
 						<Link href="/projects">
 							<Button className="text-sm">
-								Projects
+								{t("projects")}
 								<ArrowRight className="size-4" />
 							</Button>
 						</Link>
@@ -143,7 +145,7 @@ export function Header() {
 					<div className="relative h-full">
 						<button
 							type="button"
-							aria-label="Close menu"
+							aria-label={t("closeMenu")}
 							className="absolute inset-0"
 							onClick={closeMenu}
 							onKeyDown={(event) => {
