@@ -4,8 +4,31 @@ import {
 	BatchCommand,
 	InsertElementCommand,
 } from "@/lib/commands";
+import { createElementSelectionResult } from "@/lib/commands/base-command";
 import { buildSubtitleTextElement } from "./build-subtitle-text-element";
 import type { SubtitleCue } from "./types";
+
+class InsertSubtitleBatchCommand extends BatchCommand {
+	constructor(
+		commands: Array<AddTrackCommand | InsertElementCommand>,
+		private readonly selectedElements: Array<{
+			trackId: string;
+			elementId: string;
+		}>,
+	) {
+		super(commands);
+	}
+
+	execute() {
+		super.execute();
+		return createElementSelectionResult(this.selectedElements);
+	}
+
+	redo() {
+		super.redo();
+		return createElementSelectionResult(this.selectedElements);
+	}
+}
 
 export function insertCaptionChunksAsTextTrack({
 	editor,
@@ -32,8 +55,15 @@ export function insertCaptionChunksAsTextTrack({
 				}),
 			}),
 	);
+	const selection = insertCommands.map((command) => ({
+		trackId,
+		elementId: command.getElementId(),
+	}));
 	editor.command.execute({
-		command: new BatchCommand([addTrackCommand, ...insertCommands]),
+		command: new InsertSubtitleBatchCommand(
+			[addTrackCommand, ...insertCommands],
+			selection,
+		),
 	});
 
 	return trackId;

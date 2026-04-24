@@ -7,14 +7,18 @@ import type { MediaAsset } from "@/lib/media/types";
 import type { TProject } from "@/lib/project/types";
 import type { TScene } from "@/lib/timeline";
 import { BUILT_IN_TEMPLATES } from "@/lib/templates/built-in";
+import { getBuiltInDemoManifest } from "@/lib/templates/presentation";
+import {
+	instantiateProjectTemplateCore,
+	instantiateSceneTemplateCore,
+	normalizeSerializedTemplateCore,
+} from "@/lib/templates/core";
 import {
 	buildProjectTemplate,
 	buildSceneTemplate,
 	bundleTemplateExport,
 	dataUrlToFile,
 	deserializeTemplate,
-	instantiateProjectTemplate,
-	instantiateSceneTemplate,
 	projectTemplateFromExportBundle,
 	serializeTemplate,
 } from "@/lib/templates/utils";
@@ -354,47 +358,6 @@ ${theme.art}
 	};
 }
 
-type BuiltInDemoAssetEntry = {
-	id: string;
-	type: "video" | "image";
-	name: string;
-	path: string;
-	thumbnailPath?: string;
-	width?: number;
-	height?: number;
-	duration?: number;
-	photographer?: string | null;
-	sourceUrl?: string;
-	pexelsId?: number;
-};
-
-type BuiltInDemoManifest = {
-	version: number;
-	generatedAt: string;
-	provider: string;
-	assets: Record<string, BuiltInDemoAssetEntry>;
-	slots: Record<string, string>;
-};
-
-let builtInDemoManifestPromise: Promise<BuiltInDemoManifest | null> | null =
-	null;
-
-async function getBuiltInDemoManifest() {
-	if (!builtInDemoManifestPromise) {
-		builtInDemoManifestPromise = fetch("/template-assets/pexels/manifest.json")
-			.then(async (response) => {
-				if (!response.ok) {
-					return null;
-				}
-
-				return (await response.json()) as BuiltInDemoManifest;
-			})
-			.catch(() => null);
-	}
-
-	return builtInDemoManifestPromise;
-}
-
 async function getBuiltInDemoAsset({
 	template,
 	slot,
@@ -462,7 +425,12 @@ class TemplateService {
 
 	async listTemplates(): Promise<Template[]> {
 		const storedTemplates = await this.templatesAdapter.getAll();
-		const userTemplates = storedTemplates
+		const normalizedTemplates = await Promise.all(
+			storedTemplates.map((template) =>
+				normalizeSerializedTemplateCore({ template }),
+			),
+		);
+		const userTemplates = normalizedTemplates
 			.map(deserializeTemplate)
 			.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
 
@@ -476,7 +444,13 @@ class TemplateService {
 		}
 
 		const template = await this.templatesAdapter.get(id);
-		return template ? deserializeTemplate(template) : null;
+		if (!template) {
+			return null;
+		}
+
+		return deserializeTemplate(
+			await normalizeSerializedTemplateCore({ template }),
+		);
 	}
 
 	async saveProjectTemplate({
@@ -725,7 +699,7 @@ class TemplateService {
 		}
 
 		const resolved = await this.resolveSlotAssets({ template, slotFiles });
-		return instantiateProjectTemplate({
+		return instantiateProjectTemplateCore({
 			template,
 			resolvedSlotAssets: resolved,
 		});
@@ -744,7 +718,7 @@ class TemplateService {
 		}
 
 		const resolved = await this.resolveSlotAssets({ template, slotFiles });
-		return instantiateSceneTemplate({
+		return instantiateSceneTemplateCore({
 			template,
 			resolvedSlotAssets: resolved,
 		});

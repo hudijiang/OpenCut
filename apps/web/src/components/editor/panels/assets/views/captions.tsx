@@ -14,15 +14,26 @@ import { TRANSCRIPTION_DIAGNOSTICS_SCOPE } from "@/lib/transcription/diagnostics
 import { DEFAULT_TRANSCRIPTION_SAMPLE_RATE } from "@/lib/transcription/audio";
 import { TRANSCRIPTION_LANGUAGES } from "@/lib/transcription/supported-languages";
 import type {
-	CaptionChunk,
 	TranscriptionLanguage,
 	TranscriptionProgress,
 } from "@/lib/transcription/types";
 import { transcriptionService } from "@/services/transcription/service";
 import { decodeAudioToFloat32 } from "@/lib/media/audio";
 import { buildCaptionChunks } from "@/lib/transcription/caption";
+import {
+	DEFAULT_CAPTION_SEGMENTATION_PRESET,
+	getCaptionSegmentationPreset,
+	type CaptionSegmentationPresetId,
+	CAPTION_SEGMENTATION_PRESETS,
+} from "@/lib/transcription/presets";
 import { insertCaptionChunksAsTextTrack } from "@/lib/subtitles/insert";
 import { parseSubtitleFile } from "@/lib/subtitles/parse";
+import {
+	applySubtitleStylePresetToCues,
+	DEFAULT_SUBTITLE_STYLE_PRESET,
+	type SubtitleStylePresetId,
+	SUBTITLE_STYLE_PRESETS,
+} from "@/lib/subtitles/presets";
 import { Spinner } from "@/components/ui/spinner";
 import {
 	Section,
@@ -40,6 +51,7 @@ import {
 } from "@/components/ui/tooltip";
 import type { DiagnosticSeverity } from "@/lib/diagnostics/types";
 import { useTranslations } from "next-intl";
+import type { SubtitleCue } from "@/lib/subtitles/types";
 
 const DIAGNOSTIC_BUTTON_VARIANT: Record<
 	DiagnosticSeverity,
@@ -99,6 +111,10 @@ export function Captions() {
 	const tDubbingLanguages = useTranslations("dubbing.languages");
 	const [selectedLanguage, setSelectedLanguage] =
 		useState<TranscriptionLanguage>("auto");
+	const [selectedStylePreset, setSelectedStylePreset] =
+		useState<SubtitleStylePresetId>(DEFAULT_SUBTITLE_STYLE_PRESET);
+	const [selectedSegmentationPreset, setSelectedSegmentationPreset] =
+		useState<CaptionSegmentationPresetId>(DEFAULT_CAPTION_SEGMENTATION_PRESET);
 	const [processing, dispatch] = useReducer(processingReducer, IDLE_STATE);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
@@ -124,9 +140,16 @@ export function Captions() {
 	const insertCaptions = ({
 		captions,
 	}: {
-		captions: CaptionChunk[];
+		captions: SubtitleCue[];
 	}): boolean => {
-		const trackId = insertCaptionChunksAsTextTrack({ editor, captions });
+		const styledCaptions = applySubtitleStylePresetToCues({
+			captions,
+			presetId: selectedStylePreset,
+		});
+		const trackId = insertCaptionChunksAsTextTrack({
+			editor,
+			captions: styledCaptions,
+		});
 		return trackId !== null;
 	};
 
@@ -152,7 +175,15 @@ export function Captions() {
 			});
 
 			dispatch({ type: "update_step", step: t("generatingCaptions") });
-			const captionChunks = buildCaptionChunks({ segments: result.segments });
+			const segmentationPreset = getCaptionSegmentationPreset({
+				id: selectedSegmentationPreset,
+			});
+			const captionChunks = buildCaptionChunks({
+				segments: result.segments,
+				maxTokensPerCaption: segmentationPreset.maxTokensPerCaption,
+				minDuration: segmentationPreset.minDuration,
+				splitOnPunctuation: segmentationPreset.splitOnPunctuation,
+			});
 
 			if (!insertCaptions({ captions: captionChunks })) {
 				dispatch({ type: "fail", error: t("noCaptionsGenerated") });
@@ -242,6 +273,22 @@ export function Captions() {
 		setSelectedLanguage(matchedLanguage.code);
 	};
 
+	const handleStylePresetChange = ({ value }: { value: string }) => {
+		const matchedPreset = SUBTITLE_STYLE_PRESETS.find(
+			(preset) => preset.id === value,
+		);
+		if (!matchedPreset) return;
+		setSelectedStylePreset(matchedPreset.id);
+	};
+
+	const handleSegmentationPresetChange = ({ value }: { value: string }) => {
+		const matchedPreset = CAPTION_SEGMENTATION_PRESETS.find(
+			(preset) => preset.id === value,
+		);
+		if (!matchedPreset) return;
+		setSelectedSegmentationPreset(matchedPreset.id);
+	};
+
 	const error = processing.status === "idle" ? processing.error : null;
 	const warnings = processing.status === "idle" ? processing.warnings : [];
 
@@ -319,7 +366,46 @@ export function Captions() {
 								</SelectContent>
 							</Select>
 						</SectionField>
+						<SectionField label={t("captionPacing")}>
+							<Select
+								value={selectedSegmentationPreset}
+								onValueChange={(value) =>
+									handleSegmentationPresetChange({ value })
+								}
+							>
+								<SelectTrigger>
+									<SelectValue placeholder={t("captionPacing")} />
+								</SelectTrigger>
+								<SelectContent>
+									{CAPTION_SEGMENTATION_PRESETS.map((preset) => (
+										<SelectItem key={preset.id} value={preset.id}>
+											{t(`pacingPresets.${preset.id}`)}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</SectionField>
+						<SectionField label={t("stylePreset")}>
+							<Select
+								value={selectedStylePreset}
+								onValueChange={(value) => handleStylePresetChange({ value })}
+							>
+								<SelectTrigger>
+									<SelectValue placeholder={t("stylePreset")} />
+								</SelectTrigger>
+								<SelectContent>
+									{SUBTITLE_STYLE_PRESETS.map((preset) => (
+										<SelectItem key={preset.id} value={preset.id}>
+											{t(`stylePresets.${preset.id}`)}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</SectionField>
 					</SectionFields>
+					<div className="rounded-md border border-border/60 bg-muted/35 p-3">
+						<p className="text-muted-foreground text-sm">{t("editableHint")}</p>
+					</div>
 
 					<Button
 						type="button"

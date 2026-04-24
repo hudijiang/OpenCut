@@ -5,9 +5,11 @@ import {
 	ArrowRightDoubleIcon,
 	ClosedCaptionIcon,
 	Folder03Icon,
+	GridViewIcon,
 	Happy01Icon,
 	HeadphonesIcon,
 	MagicWand05Icon,
+	ScissorIcon,
 	TextIcon,
 	Settings01Icon,
 	ColorsIcon,
@@ -16,12 +18,14 @@ import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 
 export const TAB_KEYS = [
 	"media",
+	"template",
 	"sounds",
 	"text",
 	"stickers",
 	"effects",
 	"transitions",
 	"captions",
+	"quickCut",
 	"adjustment",
 	"settings",
 ] as const;
@@ -38,6 +42,10 @@ export const tabs = {
 	media: {
 		icon: createHugeiconsIcon({ icon: Folder03Icon }),
 		labelKey: "media",
+	},
+	template: {
+		icon: createHugeiconsIcon({ icon: GridViewIcon }),
+		labelKey: "template",
 	},
 	sounds: {
 		icon: createHugeiconsIcon({ icon: HeadphonesIcon }),
@@ -62,6 +70,10 @@ export const tabs = {
 	captions: {
 		icon: createHugeiconsIcon({ icon: ClosedCaptionIcon }),
 		labelKey: "captions",
+	},
+	quickCut: {
+		icon: createHugeiconsIcon({ icon: ScissorIcon }),
+		labelKey: "quickCut",
 	},
 	adjustment: {
 		icon: createHugeiconsIcon({ icon: ColorsIcon }),

@@ -22,6 +22,15 @@ export interface TemplateMediaSlot {
 	boundElements: TemplateBoundElementRef[];
 }
 
+export interface TemplateSlotBinding {
+	templateId: string;
+	templateName: string;
+	slotId: string;
+	slotLabel: string;
+	assetId: string;
+	accept: MediaType[];
+}
+
 export interface TemplateAssetMetadata {
 	id: string;
 	slotId: string;
@@ -102,11 +111,13 @@ export interface TemplateInstantiationAsset {
 export interface InstantiatedProjectTemplate {
 	project: TemplateProjectSnapshot;
 	mediaAssets: TemplateInstantiationAsset[];
+	slotBindings: TemplateSlotBinding[];
 }
 
 export interface InstantiatedSceneTemplate {
 	scene: TScene;
 	mediaAssets: TemplateInstantiationAsset[];
+	slotBindings: TemplateSlotBinding[];
 }
 
 export interface TemplateExportAsset {

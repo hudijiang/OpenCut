@@ -1,5 +1,6 @@
 import type { FrameRate } from "opencut-wasm";
 import type { TScene } from "@/lib/timeline/types";
+import type { TemplateSlotBinding } from "@/lib/templates/types";
 
 export type TBackground =
 	| {
@@ -47,6 +48,11 @@ export interface TProject {
 	settings: TProjectSettings;
 	version: number;
 	timelineViewState?: TTimelineViewState;
+	templateInstance?: {
+		templateId: string;
+		templateName: string;
+		slotBindings: TemplateSlotBinding[];
+	};
 }
 
 export type TProjectSortKey = "createdAt" | "updatedAt" | "name" | "duration";

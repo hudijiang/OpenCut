@@ -28,8 +28,11 @@ import { loadFonts } from "@/lib/fonts/google-fonts";
 import { DEFAULTS } from "@/lib/timeline/defaults";
 import { getElementFontFamilies } from "@/lib/timeline/element-utils";
 import { getRaisedProjectFpsForImportedMedia } from "@/lib/fps/utils";
+import { processMediaAssets } from "@/lib/media/processing";
 import type { MediaAsset } from "@/lib/media/types";
 import type { TemplateProjectSnapshot } from "@/lib/templates/types";
+import { replaceTemplateSlotAssetInScenesCore } from "@/lib/templates/core";
+import { TICKS_PER_SECOND } from "@/lib/wasm/ticks";
 
 export interface MigrationState {
 	isMigrating: boolean;
@@ -486,10 +489,12 @@ export class ProjectManager {
 
 	async createProjectFromTemplate({
 		project,
+		templateInstance,
 		mediaAssets,
 		name,
 	}: {
 		project: TemplateProjectSnapshot;
+		templateInstance?: TProject["templateInstance"];
 		mediaAssets: Array<
 			MediaAsset & {
 				id: string;
@@ -510,6 +515,7 @@ export class ProjectManager {
 			settings: project.settings,
 			version: CURRENT_PROJECT_VERSION,
 			timelineViewState: project.timelineViewState,
+			templateInstance,
 		};
 
 		await storageService.saveProject({ project: newProject });
@@ -524,6 +530,100 @@ export class ProjectManager {
 
 		this.updateMetadata(newProject);
 		return newProject.metadata.id;
+	}
+
+	getTemplateInstance() {
+		return this.active?.templateInstance ?? null;
+	}
+
+	async replaceTemplateSlotAsset({
+		slotId,
+		file,
+	}: {
+		slotId: string;
+		file: File;
+	}): Promise<void> {
+		if (!this.active) {
+			throw new Error("No active project");
+		}
+
+		const templateInstance = this.active.templateInstance;
+		if (!templateInstance) {
+			throw new Error("This project was not created from a template");
+		}
+
+		const slotBinding = templateInstance.slotBindings.find(
+			(binding) => binding.slotId === slotId,
+		);
+		if (!slotBinding) {
+			throw new Error("Template slot not found");
+		}
+
+		const processedAssets = await processMediaAssets({
+			files: [file],
+		});
+		const processedAsset = processedAssets[0];
+		if (!processedAsset) {
+			throw new Error(`Failed to process ${file.name}`);
+		}
+
+		if (!slotBinding.accept.includes(processedAsset.type)) {
+			throw new Error(`${processedAsset.name} does not match this slot`);
+		}
+
+		const savedAsset = await this.editor.media.addMediaAsset({
+			projectId: this.active.metadata.id,
+			asset: processedAsset,
+		});
+		if (!savedAsset) {
+			throw new Error(`Failed to save ${processedAsset.name}`);
+		}
+
+		const currentScenes = this.editor.scenes.getScenes();
+		const activeSceneId =
+			this.editor.scenes.getActiveScene()?.id ?? this.active.currentSceneId;
+
+		const nextScenes = await replaceTemplateSlotAssetInScenesCore({
+			scenes: currentScenes,
+			currentAssetId: slotBinding.assetId,
+			nextAssetId: savedAsset.id,
+			nextMediaType: savedAsset.type,
+			sourceDuration:
+				typeof savedAsset.duration === "number"
+					? savedAsset.duration * TICKS_PER_SECOND
+					: undefined,
+		});
+
+		this.editor.scenes.setScenes({
+			scenes: nextScenes,
+			activeSceneId,
+		});
+
+		const refreshedProject = this.getActive();
+		const updatedProject: TProject = {
+			...refreshedProject,
+			scenes: nextScenes,
+			currentSceneId: activeSceneId,
+			templateInstance: {
+				...templateInstance,
+				slotBindings: templateInstance.slotBindings.map((binding) =>
+					binding.slotId === slotId
+						? {
+								...binding,
+								assetId: savedAsset.id,
+							}
+						: binding,
+				),
+			},
+			metadata: {
+				...refreshedProject.metadata,
+				duration: getProjectDurationFromScenes({ scenes: nextScenes }),
+				updatedAt: new Date(),
+			},
+		};
+
+		this.setActiveProject({ project: updatedProject });
+		this.updateMetadata(updatedProject);
 	}
 
 	async updateSettings({

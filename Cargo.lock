@@ -3894,6 +3894,7 @@ dependencies = [
  "num-traits",
  "serde",
  "serde-wasm-bindgen",
+ "templates",
  "time",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -5678,6 +5679,19 @@ dependencies = [
  "once_cell",
  "rustix 1.1.4",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "templates"
+version = "0.1.0"
+dependencies = [
+ "bridge",
+ "js-sys",
+ "serde",
+ "serde_json",
+ "tsify-next",
+ "uuid",
+ "wasm-bindgen",
 ]
 
 [[package]]

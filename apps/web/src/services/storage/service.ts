@@ -16,7 +16,11 @@ import type {
 	SerializedProject,
 	SerializedScene,
 } from "./types";
-import type { SavedSoundsData, SavedSound, SoundEffect } from "@/lib/sounds/types";
+import type {
+	SavedSoundsData,
+	SavedSound,
+	SoundEffect,
+} from "@/lib/sounds/types";
 import {
 	migrations,
 	runStorageMigrations,
@@ -113,11 +117,7 @@ class StorageService {
 		return isStorageQuotaExceededError({ error });
 	}
 
-	private stripAudioBuffers({
-		tracks,
-	}: {
-		tracks: SceneTracks;
-	}): SceneTracks {
+	private stripAudioBuffers({ tracks }: { tracks: SceneTracks }): SceneTracks {
 		return {
 			...tracks,
 			audio: tracks.audio.map((track) => ({
@@ -158,6 +158,7 @@ class StorageService {
 			settings: project.settings,
 			version: project.version,
 			timelineViewState: project.timelineViewState,
+			templateInstance: project.templateInstance,
 		};
 
 		await this.projectsAdapter.set(project.metadata.id, serializedProject);
@@ -200,6 +201,7 @@ class StorageService {
 			settings: serializedProject.settings,
 			version: serializedProject.version,
 			timelineViewState: serializedProject.timelineViewState,
+			templateInstance: serializedProject.templateInstance,
 		};
 
 		return { project };

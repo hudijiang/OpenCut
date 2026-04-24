@@ -2,9 +2,20 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMessages, useTranslations } from "next-intl";
+import Image from "next/image";
 import { toast } from "sonner";
 import { useEditor } from "@/hooks/use-editor";
+import {
+	formatTemplateDurationLabel,
+	getBuiltInDemoManifest,
+	getTemplateAspectRatioLabel,
+	getTemplateCoverSource,
+	getTemplateDurationSeconds,
+	getTemplatePrimaryDemoCredit,
+	type BuiltInDemoManifest,
+} from "@/lib/templates/presentation";
 import { templateService } from "@/services/templates/service";
+import { useAssetsPanelStore } from "@/stores/assets-panel-store";
 import type { SceneTemplateApplyMode, Template } from "@/lib/templates/types";
 import { downloadBlob } from "@/utils/browser";
 import { cn } from "@/utils/ui";
@@ -79,8 +90,12 @@ export function TemplateLibraryDialog(props: TemplateLibraryDialogProps) {
 	};
 	const builtInMessages = messages.templates?.builtIn ?? {};
 	const editor = useEditor();
+	const { setActiveTab } = useAssetsPanelStore();
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [templates, setTemplates] = useState<Template[]>([]);
+	const [demoManifest, setDemoManifest] = useState<BuiltInDemoManifest | null>(
+		null,
+	);
 	const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
 		null,
 	);
@@ -119,6 +134,11 @@ export function TemplateLibraryDialog(props: TemplateLibraryDialogProps) {
 		if (!props.open) return;
 		void loadTemplates();
 	}, [loadTemplates, props.open]);
+
+	useEffect(() => {
+		if (!props.open) return;
+		void getBuiltInDemoManifest().then(setDemoManifest);
+	}, [props.open]);
 
 	const selectedTemplate = useMemo(
 		() =>
@@ -168,6 +188,39 @@ export function TemplateLibraryDialog(props: TemplateLibraryDialogProps) {
 				.map((type) => builtInMessages.mediaTypes?.[type] ?? type)
 				.join(", "),
 		[builtInMessages.mediaTypes],
+	);
+
+	const getTemplateCover = useCallback(
+		(template: Template) =>
+			getTemplateCoverSource({
+				template,
+				manifest: demoManifest,
+			}),
+		[demoManifest],
+	);
+
+	const getTemplateDuration = useCallback(
+		(template: Template) =>
+			formatTemplateDurationLabel(getTemplateDurationSeconds(template)),
+		[],
+	);
+
+	const getTemplateAspectRatio = useCallback(
+		(template: Template) =>
+			getTemplateAspectRatioLabel({
+				template,
+				manifest: demoManifest,
+			}),
+		[demoManifest],
+	);
+
+	const getTemplateCredit = useCallback(
+		(template: Template) =>
+			getTemplatePrimaryDemoCredit({
+				template,
+				manifest: demoManifest,
+			}),
+		[demoManifest],
 	);
 
 	useEffect(() => {
@@ -242,6 +295,11 @@ export function TemplateLibraryDialog(props: TemplateLibraryDialogProps) {
 				});
 				const projectId = await editor.project.createProjectFromTemplate({
 					project: instantiated.project,
+					templateInstance: {
+						templateId: selectedTemplate.id,
+						templateName: getTemplateName(selectedTemplate),
+						slotBindings: instantiated.slotBindings,
+					},
 					mediaAssets: instantiated.mediaAssets.map((asset) => ({
 						id: asset.assetId,
 						name: asset.name,
@@ -257,6 +315,7 @@ export function TemplateLibraryDialog(props: TemplateLibraryDialogProps) {
 					})),
 					name: projectName.trim() || selectedTemplate.name,
 				});
+				setActiveTab("template");
 				props.onProjectCreated(projectId);
 			} else {
 				const instantiated = await templateService.instantiateScene({
@@ -363,6 +422,10 @@ export function TemplateLibraryDialog(props: TemplateLibraryDialogProps) {
 											const templateName = getTemplateName(template);
 											const templateDescription =
 												getTemplateDescription(template);
+											const templateCover = getTemplateCover(template);
+											const templateDuration = getTemplateDuration(template);
+											const templateAspectRatio =
+												getTemplateAspectRatio(template);
 											return (
 												<div
 													key={template.id}
@@ -378,24 +441,73 @@ export function TemplateLibraryDialog(props: TemplateLibraryDialogProps) {
 														onClick={() => setSelectedTemplateId(template.id)}
 														className="w-full text-left"
 													>
-														<div className="space-y-1">
-															<div className="flex flex-wrap items-center gap-2">
-																<h3 className="font-medium">{templateName}</h3>
-																<span className="text-muted-foreground rounded-full border px-2 py-0.5 text-xs">
-																	{template.source === "built-in"
-																		? t("badges.builtIn")
-																		: t("badges.user")}
-																</span>
+														<div className="grid gap-4 sm:grid-cols-[9rem_minmax(0,1fr)]">
+															<div className="bg-muted relative aspect-[4/5] overflow-hidden rounded-md border">
+																{templateCover ? (
+																	<Image
+																		src={templateCover}
+																		alt={t("library.previewAlt", {
+																			name: templateName,
+																		})}
+																		fill
+																		unoptimized
+																		sizes="144px"
+																		className="object-cover"
+																	/>
+																) : (
+																	<div className="flex size-full items-center justify-center p-4 text-center text-sm font-medium">
+																		{templateName}
+																	</div>
+																)}
+																<div className="absolute right-2 bottom-2 rounded bg-black/65 px-2 py-1 text-xs font-medium text-white">
+																	{templateDuration}
+																</div>
 															</div>
-															<p className="text-muted-foreground text-sm">
-																{templateDescription ||
-																	t("states.noDescription")}
-															</p>
-															<p className="text-muted-foreground text-xs">
-																{t("library.slotCount", {
-																	count: template.mediaSlots.length,
-																})}
-															</p>
+
+															<div className="space-y-2">
+																<div className="flex flex-wrap items-center gap-2">
+																	<h3 className="font-medium">
+																		{templateName}
+																	</h3>
+																	<span className="text-muted-foreground rounded-full border px-2 py-0.5 text-xs">
+																		{template.source === "built-in"
+																			? t("badges.builtIn")
+																			: t("badges.user")}
+																	</span>
+																	<span className="text-muted-foreground rounded-full border px-2 py-0.5 text-xs">
+																		{template.kind === "project"
+																			? t("library.projectKind")
+																			: t("library.sceneKind")}
+																	</span>
+																</div>
+																<p className="text-muted-foreground text-sm">
+																	{templateDescription ||
+																		t("states.noDescription")}
+																</p>
+																<div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+																	<span>
+																		{t("library.aspectRatio")}:{" "}
+																		{templateAspectRatio}
+																	</span>
+																	<span>
+																		{t("library.slotCount", {
+																			count: template.mediaSlots.length,
+																		})}
+																	</span>
+																</div>
+																{template.tags.length > 0 ? (
+																	<div className="flex flex-wrap gap-2">
+																		{template.tags.slice(0, 3).map((tag) => (
+																			<span
+																				key={tag}
+																				className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs"
+																			>
+																				{tag}
+																			</span>
+																		))}
+																	</div>
+																) : null}
+															</div>
 														</div>
 													</button>
 
@@ -436,6 +548,28 @@ export function TemplateLibraryDialog(props: TemplateLibraryDialogProps) {
 							<ScrollArea className="max-h-[32vh] pr-2 xl:h-full xl:max-h-none">
 								{selectedTemplate ? (
 									<div className="space-y-4">
+										<div className="bg-muted relative aspect-[4/5] overflow-hidden rounded-lg border">
+											{getTemplateCover(selectedTemplate) ? (
+												<Image
+													src={getTemplateCover(selectedTemplate) ?? ""}
+													alt={t("library.previewAlt", {
+														name: getTemplateName(selectedTemplate),
+													})}
+													fill
+													unoptimized
+													sizes="(max-width: 1280px) 100vw, 420px"
+													className="object-cover"
+												/>
+											) : (
+												<div className="flex size-full items-center justify-center p-6 text-center text-sm font-medium">
+													{getTemplateName(selectedTemplate)}
+												</div>
+											)}
+											<div className="absolute right-3 bottom-3 rounded bg-black/65 px-2.5 py-1 text-xs font-medium text-white">
+												{getTemplateDuration(selectedTemplate)}
+											</div>
+										</div>
+
 										<div className="space-y-1">
 											<h3 className="font-medium">
 												{getTemplateName(selectedTemplate)}
@@ -445,6 +579,88 @@ export function TemplateLibraryDialog(props: TemplateLibraryDialogProps) {
 													t("states.noDescription")}
 											</p>
 										</div>
+
+										<div className="grid gap-3 sm:grid-cols-2">
+											<div className="rounded-md border p-3">
+												<p className="text-muted-foreground text-xs">
+													{t("library.duration")}
+												</p>
+												<p className="text-sm font-medium">
+													{getTemplateDuration(selectedTemplate)}
+												</p>
+											</div>
+											<div className="rounded-md border p-3">
+												<p className="text-muted-foreground text-xs">
+													{t("library.aspectRatio")}
+												</p>
+												<p className="text-sm font-medium">
+													{getTemplateAspectRatio(selectedTemplate)}
+												</p>
+											</div>
+											<div className="rounded-md border p-3">
+												<p className="text-muted-foreground text-xs">
+													{t("library.templateType")}
+												</p>
+												<p className="text-sm font-medium">
+													{selectedTemplate.kind === "project"
+														? t("library.projectKind")
+														: t("library.sceneKind")}
+												</p>
+											</div>
+											<div className="rounded-md border p-3">
+												<p className="text-muted-foreground text-xs">
+													{t("library.source")}
+												</p>
+												<p className="text-sm font-medium">
+													{selectedTemplate.source === "built-in"
+														? t("badges.builtIn")
+														: t("badges.user")}
+												</p>
+											</div>
+										</div>
+
+										{selectedTemplate.tags.length > 0 ? (
+											<div className="space-y-2">
+												<h4 className="text-sm font-medium">
+													{t("library.tags")}
+												</h4>
+												<div className="flex flex-wrap gap-2">
+													{selectedTemplate.tags.map((tag) => (
+														<span
+															key={tag}
+															className="bg-muted text-muted-foreground rounded-full px-2.5 py-1 text-xs"
+														>
+															{tag}
+														</span>
+													))}
+												</div>
+											</div>
+										) : null}
+
+										{getTemplateCredit(selectedTemplate)?.sourceUrl ? (
+											<div className="space-y-2 rounded-md border p-3">
+												<p className="text-muted-foreground text-xs">
+													{t("library.demoAsset")}
+												</p>
+												<p className="text-sm font-medium">
+													{getTemplateCredit(selectedTemplate)?.photographer
+														? t("library.byPhotographer", {
+																name:
+																	getTemplateCredit(selectedTemplate)
+																		?.photographer ?? "",
+															})
+														: t("library.localDemoAsset")}
+												</p>
+												<a
+													href={getTemplateCredit(selectedTemplate)?.sourceUrl}
+													target="_blank"
+													rel="noreferrer"
+													className="text-sm underline underline-offset-4"
+												>
+													{t("library.viewSource")}
+												</a>
+											</div>
+										) : null}
 
 										{props.kind === "project" ? (
 											<div className="space-y-2">

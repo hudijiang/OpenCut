@@ -21,67 +21,6 @@ const defaultProjectSettings: TProjectSettings = {
 	},
 };
 
-function textElement({
-	id,
-	name,
-	content,
-	fontSize,
-	startTime,
-	duration,
-	x = 0,
-	y,
-	bold = false,
-	background,
-}: {
-	id: string;
-	name: string;
-	content: string;
-	fontSize: number;
-	startTime: number;
-	duration: number;
-	x?: number;
-	y: number;
-	bold?: boolean;
-	background?: {
-		enabled: boolean;
-		color: string;
-		cornerRadius?: number;
-		paddingX?: number;
-		paddingY?: number;
-		offsetX?: number;
-		offsetY?: number;
-	};
-}) {
-	return {
-		id,
-		type: "text" as const,
-		name,
-		content,
-		fontSize,
-		fontFamily: "Arial",
-		color: "#FFFFFF",
-		background: background ?? {
-			enabled: false,
-			color: "#000000",
-		},
-		textAlign: "center" as const,
-		fontWeight: bold ? ("bold" as const) : ("normal" as const),
-		fontStyle: "normal" as const,
-		textDecoration: "none" as const,
-		letterSpacing: 0,
-		lineHeight: 1.1,
-		duration: duration * TICKS_PER_SECOND,
-		startTime: startTime * TICKS_PER_SECOND,
-		trimStart: 0,
-		trimEnd: 0,
-		transform: {
-			...DEFAULTS.element.transform,
-			position: { x, y },
-		},
-		opacity: 1,
-	};
-}
-
 function mediaElement({
 	id,
 	name,
@@ -254,44 +193,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
 			id: "scene-talking-head",
 			name: "Main scene",
 			tracks: {
-				overlay: [
-					{
-						id: "track-title",
-						name: "Title",
-						type: "text",
-						hidden: false,
-						elements: [
-							textElement({
-								id: "element-title",
-								name: "Title",
-								content: "Your hook goes here",
-								fontSize: 92,
-								startTime: 0,
-								duration: 3,
-								y: -320,
-								bold: true,
-							}),
-							textElement({
-								id: "element-subtitle",
-								name: "Subtitle",
-								content: "Add a punchy supporting line",
-								fontSize: 46,
-								startTime: 3,
-								duration: 3,
-								y: 350,
-								background: {
-									enabled: true,
-									color: "#111111",
-									cornerRadius: 24,
-									paddingX: 30,
-									paddingY: 18,
-									offsetX: 0,
-									offsetY: 0,
-								},
-							}),
-						],
-					},
-				],
+				overlay: [],
 				main: {
 					id: "track-main-video",
 					name: "Main Track",
@@ -390,26 +292,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
 			id: "scene-photo-slideshow",
 			name: "Slideshow",
 			tracks: {
-				overlay: [
-					{
-						id: "track-slideshow-title",
-						name: "Title",
-						type: "text",
-						hidden: false,
-						elements: [
-							textElement({
-								id: "element-slideshow-title",
-								name: "Title",
-								content: "Weekend recap",
-								fontSize: 72,
-								startTime: 0,
-								duration: 10,
-								y: -380,
-								bold: true,
-							}),
-						],
-					},
-				],
+				overlay: [],
 				main: {
 					id: "track-main-slideshow",
 					name: "Main Track",
@@ -488,45 +371,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
 			id: "scene-product-promo",
 			name: "Promo",
 			tracks: {
-				overlay: [
-					{
-						id: "track-product-text",
-						name: "Promo Copy",
-						type: "text",
-						hidden: false,
-						elements: [
-							textElement({
-								id: "element-product-title",
-								name: "Product Name",
-								content: "Launch your best seller",
-								fontSize: 82,
-								startTime: 0,
-								duration: 6,
-								y: -340,
-								bold: true,
-							}),
-							textElement({
-								id: "element-product-offer",
-								name: "Offer",
-								content: "TODAY ONLY · 20% OFF",
-								fontSize: 38,
-								startTime: 1,
-								duration: 5,
-								y: 360,
-								background: {
-									enabled: true,
-									color: "#D72638",
-									cornerRadius: 999,
-									paddingX: 28,
-									paddingY: 16,
-									offsetX: 0,
-									offsetY: 0,
-								},
-								bold: true,
-							}),
-						],
-					},
-				],
+				overlay: [],
 				main: {
 					id: "track-product-main",
 					name: "Main Track",
@@ -573,44 +418,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
 			id: "scene-podcast",
 			name: "Podcast",
 			tracks: {
-				overlay: [
-					{
-						id: "track-podcast-text",
-						name: "Podcast Copy",
-						type: "text",
-						hidden: false,
-						elements: [
-							textElement({
-								id: "element-podcast-title",
-								name: "Headline",
-								content: "The moment that changes the story",
-								fontSize: 74,
-								startTime: 0,
-								duration: 8,
-								y: -360,
-								bold: true,
-							}),
-							textElement({
-								id: "element-podcast-quote",
-								name: "Takeaway",
-								content: "Pull out one sharp sentence here",
-								fontSize: 34,
-								startTime: 2,
-								duration: 6,
-								y: 380,
-								background: {
-									enabled: true,
-									color: "#111111",
-									cornerRadius: 20,
-									paddingX: 24,
-									paddingY: 14,
-									offsetX: 0,
-									offsetY: 0,
-								},
-							}),
-						],
-					},
-				],
+				overlay: [],
 				main: {
 					id: "track-podcast-main",
 					name: "Main Track",
@@ -657,26 +465,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
 			id: "scene-cta",
 			name: "CTA scene",
 			tracks: {
-				overlay: [
-					{
-						id: "track-scene-text",
-						name: "CTA",
-						type: "text",
-						hidden: false,
-						elements: [
-							textElement({
-								id: "element-scene-title",
-								name: "CTA Title",
-								content: "Follow for more",
-								fontSize: 76,
-								startTime: 0,
-								duration: 4,
-								y: 250,
-								bold: true,
-							}),
-						],
-					},
-				],
+				overlay: [],
 				main: {
 					id: "track-scene-main",
 					name: "Main Track",
@@ -723,36 +512,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
 			id: "scene-meme",
 			name: "Meme scene",
 			tracks: {
-				overlay: [
-					{
-						id: "track-meme-text",
-						name: "Meme Text",
-						type: "text",
-						hidden: false,
-						elements: [
-							textElement({
-								id: "element-meme-top",
-								name: "Top Caption",
-								content: "POV: you shipped it five minutes before the deadline",
-								fontSize: 48,
-								startTime: 0,
-								duration: 5,
-								y: -430,
-								bold: true,
-							}),
-							textElement({
-								id: "element-meme-bottom",
-								name: "Bottom Caption",
-								content: "and it somehow works",
-								fontSize: 52,
-								startTime: 0,
-								duration: 5,
-								y: 430,
-								bold: true,
-							}),
-						],
-					},
-				],
+				overlay: [],
 				main: {
 					id: "track-meme-main",
 					name: "Main Track",
@@ -799,44 +559,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
 			id: "scene-greeting",
 			name: "Greeting scene",
 			tracks: {
-				overlay: [
-					{
-						id: "track-greeting-text",
-						name: "Greeting Copy",
-						type: "text",
-						hidden: false,
-						elements: [
-							textElement({
-								id: "element-greeting-title",
-								name: "Greeting Title",
-								content: "Happy Birthday",
-								fontSize: 88,
-								startTime: 0,
-								duration: 4,
-								y: -320,
-								bold: true,
-							}),
-							textElement({
-								id: "element-greeting-subtitle",
-								name: "Greeting Subtitle",
-								content: "Wishing you a year full of wins",
-								fontSize: 38,
-								startTime: 0,
-								duration: 4,
-								y: 360,
-								background: {
-									enabled: true,
-									color: "#7C3AED",
-									cornerRadius: 999,
-									paddingX: 26,
-									paddingY: 16,
-									offsetX: 0,
-									offsetY: 0,
-								},
-							}),
-						],
-					},
-				],
+				overlay: [],
 				main: {
 					id: "track-greeting-main",
 					name: "Main Track",
@@ -883,26 +606,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
 			id: "scene-travel",
 			name: "Travel opener",
 			tracks: {
-				overlay: [
-					{
-						id: "track-travel-text",
-						name: "Travel Copy",
-						type: "text",
-						hidden: false,
-						elements: [
-							textElement({
-								id: "element-travel-title",
-								name: "Trip Title",
-								content: "BALI 2026",
-								fontSize: 98,
-								startTime: 0,
-								duration: 3,
-								y: 320,
-								bold: true,
-							}),
-						],
-					},
-				],
+				overlay: [],
 				main: {
 					id: "track-travel-main",
 					name: "Main Track",
@@ -949,45 +653,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
 			id: "scene-sale",
 			name: "Sale scene",
 			tracks: {
-				overlay: [
-					{
-						id: "track-sale-text",
-						name: "Sale Copy",
-						type: "text",
-						hidden: false,
-						elements: [
-							textElement({
-								id: "element-sale-title",
-								name: "Sale Title",
-								content: "FLASH SALE",
-								fontSize: 104,
-								startTime: 0,
-								duration: 4,
-								y: -230,
-								bold: true,
-							}),
-							textElement({
-								id: "element-sale-offer",
-								name: "Sale Offer",
-								content: "UP TO 40% OFF",
-								fontSize: 54,
-								startTime: 0,
-								duration: 4,
-								y: 120,
-								background: {
-									enabled: true,
-									color: "#111111",
-									cornerRadius: 14,
-									paddingX: 24,
-									paddingY: 14,
-									offsetX: 0,
-									offsetY: 0,
-								},
-								bold: true,
-							}),
-						],
-					},
-				],
+				overlay: [],
 				main: {
 					id: "track-sale-main",
 					name: "Main Track",
@@ -1069,54 +735,6 @@ export const BUILT_IN_TEMPLATES: Template[] = [
 							}),
 						],
 					},
-					{
-						id: "track-before-after-text",
-						name: "Labels",
-						type: "text",
-						hidden: false,
-						elements: [
-							textElement({
-								id: "element-before-label",
-								name: "Before Label",
-								content: "BEFORE",
-								fontSize: 34,
-								startTime: 0,
-								duration: 4,
-								x: -460,
-								y: -420,
-								background: {
-									enabled: true,
-									color: "#111111",
-									cornerRadius: 999,
-									paddingX: 18,
-									paddingY: 10,
-									offsetX: 0,
-									offsetY: 0,
-								},
-								bold: true,
-							}),
-							textElement({
-								id: "element-after-label",
-								name: "After Label",
-								content: "AFTER",
-								fontSize: 34,
-								startTime: 0,
-								duration: 4,
-								x: 460,
-								y: -420,
-								background: {
-									enabled: true,
-									color: "#111111",
-									cornerRadius: 999,
-									paddingX: 18,
-									paddingY: 10,
-									offsetX: 0,
-									offsetY: 0,
-								},
-								bold: true,
-							}),
-						],
-					},
 				],
 				main: {
 					id: "track-before-main",
@@ -1167,44 +785,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
 			id: "scene-ugc",
 			name: "UGC scene",
 			tracks: {
-				overlay: [
-					{
-						id: "track-ugc-text",
-						name: "UGC Copy",
-						type: "text",
-						hidden: false,
-						elements: [
-							textElement({
-								id: "element-ugc-hook",
-								name: "Hook",
-								content: "I didn't expect this to work...",
-								fontSize: 68,
-								startTime: 0,
-								duration: 7,
-								y: -360,
-								bold: true,
-							}),
-							textElement({
-								id: "element-ugc-badge",
-								name: "Badge",
-								content: "Real customer review",
-								fontSize: 30,
-								startTime: 0,
-								duration: 7,
-								y: 390,
-								background: {
-									enabled: true,
-									color: "#111111",
-									cornerRadius: 999,
-									paddingX: 18,
-									paddingY: 10,
-									offsetX: 0,
-									offsetY: 0,
-								},
-							}),
-						],
-					},
-				],
+				overlay: [],
 				main: {
 					id: "track-ugc-main",
 					name: "Main Track",
@@ -1251,44 +832,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
 			id: "scene-app-demo",
 			name: "App demo",
 			tracks: {
-				overlay: [
-					{
-						id: "track-app-copy",
-						name: "App Copy",
-						type: "text",
-						hidden: false,
-						elements: [
-							textElement({
-								id: "element-app-title",
-								name: "Title",
-								content: "Show the feature in 8 seconds",
-								fontSize: 78,
-								startTime: 0,
-								duration: 8,
-								y: -390,
-								bold: true,
-							}),
-							textElement({
-								id: "element-app-subtitle",
-								name: "Subtitle",
-								content: "Simple workflow. Clear outcome.",
-								fontSize: 34,
-								startTime: 1,
-								duration: 7,
-								y: 410,
-								background: {
-									enabled: true,
-									color: "#0F172A",
-									cornerRadius: 18,
-									paddingX: 20,
-									paddingY: 12,
-									offsetX: 0,
-									offsetY: 0,
-								},
-							}),
-						],
-					},
-				],
+				overlay: [],
 				main: {
 					id: "track-app-main",
 					name: "Main Track",
@@ -1337,54 +881,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
 			id: "scene-event",
 			name: "Event scene",
 			tracks: {
-				overlay: [
-					{
-						id: "track-event-text",
-						name: "Event Copy",
-						type: "text",
-						hidden: false,
-						elements: [
-							textElement({
-								id: "element-event-date",
-								name: "Date",
-								content: "JUNE 28 · 7 PM",
-								fontSize: 30,
-								startTime: 0,
-								duration: 6,
-								y: -420,
-								background: {
-									enabled: true,
-									color: "#DC2626",
-									cornerRadius: 999,
-									paddingX: 18,
-									paddingY: 10,
-									offsetX: 0,
-									offsetY: 0,
-								},
-								bold: true,
-							}),
-							textElement({
-								id: "element-event-title",
-								name: "Title",
-								content: "You’re invited",
-								fontSize: 96,
-								startTime: 0,
-								duration: 6,
-								y: -80,
-								bold: true,
-							}),
-							textElement({
-								id: "element-event-subtitle",
-								name: "Subtitle",
-								content: "Live session · Limited seats",
-								fontSize: 38,
-								startTime: 0,
-								duration: 6,
-								y: 240,
-							}),
-						],
-					},
-				],
+				overlay: [],
 				main: {
 					id: "track-event-main",
 					name: "Main Track",
@@ -1457,83 +954,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
 			id: "scene-tutorial",
 			name: "Tutorial scene",
 			tracks: {
-				overlay: [
-					{
-						id: "track-tutorial-text",
-						name: "Tutorial Copy",
-						type: "text",
-						hidden: false,
-						elements: [
-							textElement({
-								id: "element-step-title",
-								name: "Header",
-								content: "3 steps to the result",
-								fontSize: 72,
-								startTime: 0,
-								duration: 9,
-								y: -400,
-								bold: true,
-							}),
-							textElement({
-								id: "element-step-one-label",
-								name: "Step One",
-								content: "STEP 1",
-								fontSize: 32,
-								startTime: 0,
-								duration: 3,
-								y: 380,
-								background: {
-									enabled: true,
-									color: "#111111",
-									cornerRadius: 999,
-									paddingX: 18,
-									paddingY: 10,
-									offsetX: 0,
-									offsetY: 0,
-								},
-								bold: true,
-							}),
-							textElement({
-								id: "element-step-two-label",
-								name: "Step Two",
-								content: "STEP 2",
-								fontSize: 32,
-								startTime: 3,
-								duration: 3,
-								y: 380,
-								background: {
-									enabled: true,
-									color: "#111111",
-									cornerRadius: 999,
-									paddingX: 18,
-									paddingY: 10,
-									offsetX: 0,
-									offsetY: 0,
-								},
-								bold: true,
-							}),
-							textElement({
-								id: "element-step-three-label",
-								name: "Step Three",
-								content: "STEP 3",
-								fontSize: 32,
-								startTime: 6,
-								duration: 3,
-								y: 380,
-								background: {
-									enabled: true,
-									color: "#111111",
-									cornerRadius: 999,
-									paddingX: 18,
-									paddingY: 10,
-									offsetX: 0,
-									offsetY: 0,
-								},
-								bold: true,
-							}),
-						],
-					},
-				],
+				overlay: [],
 				main: {
 					id: "track-tutorial-main",
 					name: "Main Track",
@@ -1596,44 +1017,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
 			id: "scene-quote-card",
 			name: "Quote card",
 			tracks: {
-				overlay: [
-					{
-						id: "track-quote-text",
-						name: "Quote Copy",
-						type: "text",
-						hidden: false,
-						elements: [
-							textElement({
-								id: "element-quote-line",
-								name: "Quote",
-								content: '"The work compounds faster than you think."',
-								fontSize: 70,
-								startTime: 0,
-								duration: 5,
-								y: -40,
-								bold: true,
-								background: {
-									enabled: true,
-									color: "#111111",
-									cornerRadius: 20,
-									paddingX: 28,
-									paddingY: 24,
-									offsetX: 0,
-									offsetY: 0,
-								},
-							}),
-							textElement({
-								id: "element-quote-author",
-								name: "Author",
-								content: "— Add name or source",
-								fontSize: 28,
-								startTime: 0,
-								duration: 5,
-								y: 300,
-							}),
-						],
-					},
-				],
+				overlay: [],
 				main: {
 					id: "track-quote-main",
 					name: "Main Track",
@@ -1680,26 +1064,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
 			id: "scene-unboxing",
 			name: "Unboxing scene",
 			tracks: {
-				overlay: [
-					{
-						id: "track-unboxing-text",
-						name: "Reveal Copy",
-						type: "text",
-						hidden: false,
-						elements: [
-							textElement({
-								id: "element-unboxing-title",
-								name: "Reveal",
-								content: "Opening the package everyone asked about",
-								fontSize: 62,
-								startTime: 0,
-								duration: 6,
-								y: -380,
-								bold: true,
-							}),
-						],
-					},
-				],
+				overlay: [],
 				main: {
 					id: "track-unboxing-main",
 					name: "Main Track",
@@ -1746,44 +1111,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
 			id: "scene-recipe",
 			name: "Recipe scene",
 			tracks: {
-				overlay: [
-					{
-						id: "track-recipe-text",
-						name: "Recipe Copy",
-						type: "text",
-						hidden: false,
-						elements: [
-							textElement({
-								id: "element-recipe-title",
-								name: "Dish",
-								content: "15-minute spicy noodles",
-								fontSize: 76,
-								startTime: 0,
-								duration: 5,
-								y: -360,
-								bold: true,
-							}),
-							textElement({
-								id: "element-recipe-meta",
-								name: "Meta",
-								content: "Fast · Easy · Pantry ingredients",
-								fontSize: 30,
-								startTime: 0,
-								duration: 5,
-								y: 400,
-								background: {
-									enabled: true,
-									color: "#9A3412",
-									cornerRadius: 999,
-									paddingX: 18,
-									paddingY: 10,
-									offsetX: 0,
-									offsetY: 0,
-								},
-							}),
-						],
-					},
-				],
+				overlay: [],
 				main: {
 					id: "track-recipe-main",
 					name: "Main Track",
@@ -1830,45 +1158,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
 			id: "scene-workout",
 			name: "Workout scene",
 			tracks: {
-				overlay: [
-					{
-						id: "track-workout-text",
-						name: "Workout Copy",
-						type: "text",
-						hidden: false,
-						elements: [
-							textElement({
-								id: "element-workout-title",
-								name: "Progress Title",
-								content: "Week 6 progress check",
-								fontSize: 72,
-								startTime: 0,
-								duration: 5,
-								y: -380,
-								bold: true,
-							}),
-							textElement({
-								id: "element-workout-badge",
-								name: "Badge",
-								content: "+2 reps · stronger form",
-								fontSize: 32,
-								startTime: 0,
-								duration: 5,
-								y: 400,
-								background: {
-									enabled: true,
-									color: "#166534",
-									cornerRadius: 999,
-									paddingX: 18,
-									paddingY: 10,
-									offsetX: 0,
-									offsetY: 0,
-								},
-								bold: true,
-							}),
-						],
-					},
-				],
+				overlay: [],
 				main: {
 					id: "track-workout-main",
 					name: "Main Track",
@@ -1915,54 +1205,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
 			id: "scene-news",
 			name: "News scene",
 			tracks: {
-				overlay: [
-					{
-						id: "track-news-text",
-						name: "News Copy",
-						type: "text",
-						hidden: false,
-						elements: [
-							textElement({
-								id: "element-news-badge",
-								name: "Breaking",
-								content: "BREAKING",
-								fontSize: 30,
-								startTime: 0,
-								duration: 4,
-								y: -420,
-								background: {
-									enabled: true,
-									color: "#B91C1C",
-									cornerRadius: 8,
-									paddingX: 18,
-									paddingY: 10,
-									offsetX: 0,
-									offsetY: 0,
-								},
-								bold: true,
-							}),
-							textElement({
-								id: "element-news-title",
-								name: "Headline",
-								content: "Put your update in one sharp line",
-								fontSize: 72,
-								startTime: 0,
-								duration: 4,
-								y: -40,
-								bold: true,
-								background: {
-									enabled: true,
-									color: "#111111",
-									cornerRadius: 16,
-									paddingX: 24,
-									paddingY: 18,
-									offsetX: 0,
-									offsetY: 0,
-								},
-							}),
-						],
-					},
-				],
+				overlay: [],
 				main: {
 					id: "track-news-main",
 					name: "Main Track",
@@ -2009,35 +1252,7 @@ export const BUILT_IN_TEMPLATES: Template[] = [
 			id: "scene-creator-intro",
 			name: "Creator intro",
 			tracks: {
-				overlay: [
-					{
-						id: "track-creator-text",
-						name: "Intro Copy",
-						type: "text",
-						hidden: false,
-						elements: [
-							textElement({
-								id: "element-creator-name",
-								name: "Name",
-								content: "ALEX CARTER",
-								fontSize: 90,
-								startTime: 0,
-								duration: 4,
-								y: -60,
-								bold: true,
-							}),
-							textElement({
-								id: "element-creator-role",
-								name: "Role",
-								content: "Designer · Editor · Storyteller",
-								fontSize: 34,
-								startTime: 0,
-								duration: 4,
-								y: 240,
-							}),
-						],
-					},
-				],
+				overlay: [],
 				main: {
 					id: "track-creator-main",
 					name: "Main Track",

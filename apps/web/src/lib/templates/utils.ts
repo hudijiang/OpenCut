@@ -17,6 +17,7 @@ import type {
 	TemplateMediaSlot,
 	TemplateProjectSnapshot,
 	TemplateSceneSnapshot,
+	TemplateSlotBinding,
 } from "./types";
 
 type VisualMediaType = "video" | "image";
@@ -308,6 +309,47 @@ function updateElementVisualType({
 		isSourceAudioEnabled:
 			"isSourceAudioEnabled" in element ? element.isSourceAudioEnabled : true,
 		retime: "retime" in element ? element.retime : undefined,
+	};
+}
+
+function updateElementMediaForAsset({
+	element,
+	mediaId,
+	mediaType,
+	sourceDuration,
+}: {
+	element: TimelineElement;
+	mediaId: string;
+	mediaType: MediaType;
+	sourceDuration?: number;
+}): TimelineElement {
+	if (!hasMediaId(element)) {
+		return element;
+	}
+
+	if (mediaType === "video" || mediaType === "image") {
+		const visualElement = updateElementVisualType({
+			element,
+			mediaType,
+		});
+
+		return {
+			...visualElement,
+			mediaId,
+			...(mediaType === "video" && typeof sourceDuration === "number"
+				? { sourceDuration }
+				: {}),
+		} as TimelineElement;
+	}
+
+	if (element.type !== "audio") {
+		return element;
+	}
+
+	return {
+		...element,
+		mediaId,
+		...(typeof sourceDuration === "number" ? { sourceDuration } : {}),
 	};
 }
 
@@ -636,6 +678,27 @@ export function instantiateProjectTemplate({
 			(asset) => [asset.slotId, asset.assetId] as const,
 		),
 	);
+	const slotBindings: TemplateSlotBinding[] = template.mediaSlots.flatMap(
+		(slot) => {
+			const instantiatedAsset = instantiatedMediaAssets.find(
+				(asset) => asset.slotId === slot.id,
+			);
+			if (!instantiatedAsset) {
+				return [];
+			}
+
+			return [
+				{
+					templateId: template.id,
+					templateName: template.name,
+					slotId: slot.id,
+					slotLabel: slot.label,
+					assetId: instantiatedAsset.assetId,
+					accept: slot.accept,
+				},
+			];
+		},
+	);
 	const sceneIdMap = new Map<string, string>();
 	const refreshedScenes = template.project.scenes.map((scene) => {
 		const typedScene = applyResolvedSlotMediaTypesToScene({
@@ -666,6 +729,7 @@ export function instantiateProjectTemplate({
 			timelineViewState: structuredClone(template.project.timelineViewState),
 		},
 		mediaAssets: instantiatedMediaAssets,
+		slotBindings,
 	};
 }
 
@@ -697,6 +761,27 @@ export function instantiateSceneTemplate({
 			(asset) => [asset.slotId, asset.assetId] as const,
 		),
 	);
+	const slotBindings: TemplateSlotBinding[] = template.mediaSlots.flatMap(
+		(slot) => {
+			const instantiatedAsset = instantiatedMediaAssets.find(
+				(asset) => asset.slotId === slot.id,
+			);
+			if (!instantiatedAsset) {
+				return [];
+			}
+
+			return [
+				{
+					templateId: template.id,
+					templateName: template.name,
+					slotId: slot.id,
+					slotLabel: slot.label,
+					assetId: instantiatedAsset.assetId,
+					accept: slot.accept,
+				},
+			];
+		},
+	);
 	const scene = refreshSceneIds(
 		replaceMediaIdsInScene({
 			scene: applyResolvedSlotMediaTypesToScene({
@@ -711,7 +796,53 @@ export function instantiateSceneTemplate({
 	return {
 		scene,
 		mediaAssets: instantiatedMediaAssets,
+		slotBindings,
 	};
+}
+
+export function replaceTemplateSlotAssetInScenes({
+	scenes,
+	currentAssetId,
+	nextAssetId,
+	nextMediaType,
+	sourceDuration,
+}: {
+	scenes: TScene[];
+	currentAssetId: string;
+	nextAssetId: string;
+	nextMediaType: MediaType;
+	sourceDuration?: number;
+}) {
+	return scenes.map((scene) => {
+		const cloned = structuredClone(scene);
+
+		const replaceTrack = <TTrack extends { elements: TimelineElement[] }>(
+			track: TTrack,
+		): TTrack => ({
+			...track,
+			elements: track.elements.map((element) => {
+				if (!hasMediaId(element) || element.mediaId !== currentAssetId) {
+					return element;
+				}
+
+				return updateElementMediaForAsset({
+					element,
+					mediaId: nextAssetId,
+					mediaType: nextMediaType,
+					sourceDuration,
+				});
+			}),
+		});
+
+		return {
+			...cloned,
+			tracks: {
+				overlay: cloned.tracks.overlay.map((track) => replaceTrack(track)),
+				main: replaceTrack(cloned.tracks.main),
+				audio: cloned.tracks.audio.map((track) => replaceTrack(track)),
+			},
+		};
+	});
 }
 
 export async function bundleTemplateExport({

@@ -67,7 +67,7 @@ import { ProjectInfoDialog } from "@/components/editor/dialogs/project-info-dial
 import { RenameProjectDialog } from "@/components/editor/dialogs/rename-project-dialog";
 import { cn } from "@/utils/ui";
 import { ChangelogNotification } from "@/lib/changelog/components/changelog-notification";
-import { TemplateLibraryDialog } from "@/components/templates/template-library-dialog";
+import { TemplateBrowser } from "@/components/templates/template-browser";
 const formatProjectDuration = ({
 	duration,
 }: {
@@ -96,6 +96,7 @@ function getViewModeOptions(t: (key: "view.grid" | "view.list") => string) {
 export default function ProjectsPage() {
 	const { searchQuery, sortKey, sortOrder, viewMode } = useProjectsStore();
 	const editor = useEditor();
+	const router = useRouter();
 	const sortOption: TProjectSortOption = `${sortKey}-${sortOrder}`;
 
 	const isLoading = useEditor((e) => e.project.getIsLoading());
@@ -139,6 +140,13 @@ export default function ProjectsPage() {
 						))}
 					</div>
 				)}
+				<div className="pt-4 md:pt-6">
+					<TemplateBrowser
+						onProjectCreated={(projectId) =>
+							router.push(`/editor/${projectId}`)
+						}
+					/>
+				</div>
 			</main>
 		</div>
 	);
@@ -549,21 +557,18 @@ function NewProjectButton() {
 
 function TemplateProjectButton() {
 	const t = useTranslations("templates");
-	const router = useRouter();
-	const [isOpen, setIsOpen] = useState(false);
+
+	const scrollToTemplateBrowser = () => {
+		document.getElementById("template-browser")?.scrollIntoView({
+			behavior: "smooth",
+			block: "start",
+		});
+	};
 
 	return (
-		<>
-			<Button size="lg" variant="outline" onClick={() => setIsOpen(true)}>
-				{t("actions.fromTemplate")}
-			</Button>
-			<TemplateLibraryDialog
-				open={isOpen}
-				onOpenChange={setIsOpen}
-				kind="project"
-				onProjectCreated={(projectId) => router.push(`/editor/${projectId}`)}
-			/>
-		</>
+		<Button size="lg" variant="outline" onClick={scrollToTemplateBrowser}>
+			{t("actions.fromTemplate")}
+		</Button>
 	);
 }
 

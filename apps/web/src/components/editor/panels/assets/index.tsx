@@ -9,9 +9,11 @@ import { MediaView } from "./views/assets";
 import { SettingsView } from "./views/settings";
 import { SoundsView } from "./views/sounds";
 import { StickersView } from "./views/stickers";
+import { TemplateAssetsView } from "./views/template-assets";
 import { TextView } from "./views/text";
 import { EffectsView } from "./views/effects";
 import { DubbingView } from "./views/dubbing";
+import { QuickCutView } from "./views/quick-cut";
 
 export function AssetsPanel() {
 	const t = useTranslations("assetPanel");
@@ -19,6 +21,7 @@ export function AssetsPanel() {
 
 	const viewMap: Record<Tab, React.ReactNode> = {
 		media: <MediaView />,
+		template: <TemplateAssetsView />,
 		sounds: <SoundsView />,
 		text: <TextView />,
 		stickers: <StickersView />,
@@ -29,6 +32,7 @@ export function AssetsPanel() {
 			</div>
 		),
 		captions: <Captions />,
+		quickCut: <QuickCutView />,
 		adjustment: <DubbingView />,
 		settings: <SettingsView />,
 	};
