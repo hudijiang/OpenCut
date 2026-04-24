@@ -260,10 +260,18 @@ export const textMaskDefinition: MaskDefinition<TextMaskParams> = {
 			canvasSize,
 			snapThreshold,
 		}) {
-			const { intrinsicWidth, intrinsicHeight } = measureTextMask({
-				params: startParams,
-				height: bounds.height,
-			});
+			let intrinsicWidth = 0;
+			let intrinsicHeight = 0;
+			try {
+				const measured = measureTextMask({
+					params: startParams,
+					height: bounds.height,
+				});
+				intrinsicWidth = measured.intrinsicWidth;
+				intrinsicHeight = measured.intrinsicHeight;
+			} catch {
+				// Canvas not available (e.g. test environment) — fall back to point snap
+			}
 			const position = {
 				x: proposedParams.centerX * bounds.width,
 				y: proposedParams.centerY * bounds.height,

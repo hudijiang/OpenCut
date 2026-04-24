@@ -591,14 +591,19 @@ export function insertPointIntoCustomMaskSegment({
 		inX: p23.x - endPoint.x,
 		inY: p23.y - endPoint.y,
 	};
+	const isLinearSegment =
+		startPoint.outX === 0 &&
+		startPoint.outY === 0 &&
+		endPoint.inX === 0 &&
+		endPoint.inY === 0;
 	nextPoints.splice(indices.endIndex, 0, {
 		id: pointId,
 		x: splitPoint.x,
 		y: splitPoint.y,
-		inX: p012.x - splitPoint.x,
-		inY: p012.y - splitPoint.y,
-		outX: p123.x - splitPoint.x,
-		outY: p123.y - splitPoint.y,
+		inX: isLinearSegment ? 0 : p012.x - splitPoint.x,
+		inY: isLinearSegment ? 0 : p012.y - splitPoint.y,
+		outX: isLinearSegment ? 0 : p123.x - splitPoint.x,
+		outY: isLinearSegment ? 0 : p123.y - splitPoint.y,
 	});
 	return nextPoints;
 }
