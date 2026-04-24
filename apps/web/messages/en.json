@@ -2,16 +2,42 @@
 	"assetPanel": {
 		"tabs": {
 			"media": "Media",
+			"template": "Template",
 			"sounds": "Sounds",
 			"text": "Text",
 			"stickers": "Stickers",
 			"effects": "Effects",
 			"transitions": "Transitions",
 			"captions": "Captions",
+			"quickCut": "Quick Cut",
 			"adjustment": "Dubbing",
 			"settings": "Settings"
 		},
-		"transitionsComingSoon": "Transitions view coming soon..."
+		"transitionsComingSoon": "Transitions view coming soon...",
+		"templateAssets": {
+			"title": "Template Assets",
+			"description": "Replace the starter assets used by this template without digging through the timeline.",
+			"slot": "Slot",
+			"slotCount": "{count} slots",
+			"accepts": "Accepts: {types}",
+			"replace": "Replace",
+			"replacing": "Replacing...",
+			"reveal": "Reveal in Media",
+			"replaceSuccess": "Template asset updated",
+			"replaceFailed": "Failed to replace template asset",
+			"replaceFailedDescription": "Please try another file.",
+			"noTemplateProjectTitle": "No template project",
+			"noTemplateProjectDescription": "Create a project from a template first, then come back here to swap its starter assets.",
+			"emptyTitle": "No template slots",
+			"emptyDescription": "This template does not expose any replaceable media slots yet.",
+			"missingAsset": "Missing asset",
+			"missingAssetHint": "The current asset is unavailable in this project.",
+			"mediaTypes": {
+				"image": "Image",
+				"video": "Video",
+				"audio": "Audio"
+			}
+		}
 	},
 	"editor": {
 		"languageSwitcher": {
@@ -71,6 +97,8 @@
 		"title": "Captions",
 		"import": "Import",
 		"language": "Language",
+		"captionPacing": "Caption pacing",
+		"stylePreset": "Style preset",
 		"selectLanguage": "Select a language",
 		"autoDetect": "Auto detect",
 		"generateTranscript": "Generate transcript",
@@ -83,7 +111,69 @@
 		"noCaptionsGenerated": "No captions were generated",
 		"unexpectedError": "An unexpected error occurred",
 		"noValidSubtitleCues": "No valid subtitle cues were found in the subtitle file",
-		"importedWithSkipped": "Imported {importedCount} subtitle cue(s) and skipped {skippedCount} malformed cue(s)."
+		"importedWithSkipped": "Imported {importedCount} subtitle cue(s) and skipped {skippedCount} malformed cue(s).",
+		"editableHint": "Generated captions are inserted as editable text clips on a new text track, with the whole batch selected for quick style changes.",
+		"pacingPresets": {
+			"snappy": "Snappy",
+			"balanced": "Balanced",
+			"relaxed": "Readable"
+		},
+		"stylePresets": {
+			"social-classic": "Social classic",
+			"punchy-highlight": "Punchy highlight",
+			"lower-third": "Lower third"
+		}
+	},
+	"quickCut": {
+		"title": "Quick Cut",
+		"overview": {
+			"title": "Talking-head rough cut",
+			"description": "Analyze pauses on the active scene, generate jump cut suggestions, and apply a centered crop for talking-head clips."
+		},
+		"scope": {
+			"label": "Analysis scope",
+			"selection": "Selected clips",
+			"mainTrack": "Main video track"
+		},
+		"controls": {
+			"threshold": "Silence threshold",
+			"minSilence": "Minimum silence",
+			"keepPadding": "Keep padding"
+		},
+		"actions": {
+			"analyze": "Analyze pauses",
+			"analyzing": "Analyzing...",
+			"apply": "Apply jump cut",
+			"applying": "Applying...",
+			"autoCenter": "Auto-center clips",
+			"centering": "Centering..."
+		},
+		"stats": {
+			"targets": "Target clips",
+			"suggestions": "Cut suggestions",
+			"removable": "Estimated removal",
+			"scope": "Scope"
+		},
+		"suggestions": {
+			"title": "Suggestions",
+			"count": "{count} suggestions",
+			"range": "{start} - {end}",
+			"empty": "Run analysis to generate silence cut suggestions."
+		},
+		"warnings": {
+			"title": "Skipped clips"
+		},
+		"messages": {
+			"noScene": "No active scene is available.",
+			"noTargets": "No eligible clips were found for this scope.",
+			"noSuggestions": "No removable silence was detected with the current settings.",
+			"analysisFailed": "Quick cut analysis failed.",
+			"applied": "Jump cut applied",
+			"appliedDescription": "Applied {count} cut(s) and removed about {duration}.",
+			"noCenterSuggestions": "No clips needed re-centering.",
+			"centerApplied": "Auto-center applied",
+			"centerAppliedDescription": "Updated {count} clip(s)."
+		}
 	},
 	"dubbing": {
 		"title": "Dubbing",
@@ -286,7 +376,19 @@
 			"projectDescription": "Create a new project from a built-in starter or one of your saved templates.",
 			"sceneDescription": "Insert a saved scene template into the current project, or replace the active scene with one.",
 			"templateCount": "{count} template(s)",
-			"slotCount": "{count} media slot(s)"
+			"slotCount": "{count} media slot(s)",
+			"duration": "Duration",
+			"aspectRatio": "Aspect ratio",
+			"templateType": "Template type",
+			"projectKind": "Project template",
+			"sceneKind": "Scene template",
+			"source": "Source",
+			"tags": "Tags",
+			"demoAsset": "Demo asset",
+			"localDemoAsset": "Local demo asset",
+			"byPhotographer": "Asset by {name}",
+			"viewSource": "View source",
+			"previewAlt": "{name} preview"
 		},
 		"fields": {
 			"name": "Template name",
@@ -513,6 +615,44 @@
 			"report": "Report issues"
 		}
 	},
+	"timeline": {
+		"contextMenu": {
+			"split": "Split",
+			"duplicate": "Duplicate",
+			"collapseKeyframes": "Collapse keyframes",
+			"expandKeyframes": "Expand keyframes",
+			"revealMedia": "Reveal media",
+			"replaceMedia": "Replace media",
+			"mute": "Mute",
+			"unmute": "Unmute",
+			"hide": "Hide",
+			"show": "Show",
+			"extractAudio": "Extract audio",
+			"recoverAudio": "Recover audio",
+			"deleteClip": "Delete clip",
+			"deleteText": "Delete text",
+			"deleteElements": "Delete {count} elements",
+			"pasteElements": "Paste elements",
+			"muteTrack": "Mute track",
+			"unmuteTrack": "Unmute track",
+			"hideTrack": "Hide track",
+			"showTrack": "Show track",
+			"deleteTrack": "Delete track",
+			"copy": "Copy"
+		}
+	},
+	"preview": {
+		"contextMenu": {
+			"fitToScreen": "Fit to screen",
+			"fullScreen": "Full screen",
+			"saveSnapshot": "Save snapshot",
+			"copySnapshot": "Copy snapshot",
+			"showBookmarkNotes": "Show bookmark notes",
+			"failedToCopySnapshot": "Failed to copy snapshot",
+			"failedToSaveSnapshot": "Failed to save snapshot",
+			"tryAgain": "Please try again"
+		}
+	},
 	"pages": {
 		"roadmap": {
 			"metadata": {
@@ -660,6 +800,71 @@
 				"noProjectsTitle": "No projects yet",
 				"noProjectsDescription": "Start creating your first project. Import media, edit, and export your videos. All privately.",
 				"createFirstProject": "Create your first project"
+			},
+			"templates": {
+				"eyebrow": "Template Studio",
+				"title": "Start faster with reusable formats",
+				"description": "Browse built-in starters and your own saved templates without leaving the projects page. Pick a category, preview the demo asset, replace the starter files, and create a project in one flow.",
+				"count": "{count} templates",
+				"searchPlaceholder": "Search templates, tags, or formats...",
+				"sourceLabel": "Source",
+				"sortLabel": "Sort",
+				"slotCountValue": "{count} slots",
+				"usageLabel": "Used",
+				"usageValue": "{count} times",
+				"qualityLabel": "Quality",
+				"routeLabel": "Create path",
+				"routeValue": "Create project -> Template Assets",
+				"templateFlowHint": "Projects created here open with Template Assets ready, so you can swap starter files immediately.",
+				"selectTemplateTitle": "Choose a template",
+				"selectTemplateDescription": "Select a template card to preview its layout, starter assets, and media slots.",
+				"actions": {
+					"addFavorite": "Favorite",
+					"removeFavorite": "Favorited"
+				},
+				"badges": {
+					"favorite": "Favorite",
+					"recommended": "Recommended",
+					"recent": "Recent"
+				},
+				"quality": {
+					"starter": "Starter",
+					"curated": "Curated",
+					"flagship": "Flagship"
+				},
+				"shelves": {
+					"recommendedTitle": "Recommended templates",
+					"recommendedDescription": "Templates ranked by internal quality, your favorites, and recent usage.",
+					"recentTitle": "Recently used",
+					"recentDescription": "Jump back into templates you used recently without re-sorting the whole library."
+				},
+				"empty": {
+					"title": "No matching templates",
+					"description": "Adjust your search or filters to see more templates."
+				},
+				"sources": {
+					"all": "All",
+					"builtIn": "Official",
+					"user": "My templates"
+				},
+				"sort": {
+					"recommended": "Recommended",
+					"recent": "Recent"
+				},
+				"categories": {
+					"all": "All",
+					"social": "Social",
+					"business": "Business",
+					"travel": "Travel",
+					"meme": "Meme",
+					"education": "Education",
+					"holiday": "Holiday"
+				},
+				"mediaTypes": {
+					"image": "Image",
+					"video": "Video",
+					"audio": "Audio"
+				}
 			}
 		},
 		"brand": {

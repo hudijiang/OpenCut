@@ -10,6 +10,7 @@ import { usePreviewViewport } from "@/components/editor/panels/preview/preview-v
 import { useEditor } from "@/hooks/use-editor";
 import { usePreviewStore } from "@/stores/preview-store";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 export function PreviewContextMenu({
 	onToggleFullscreen,
@@ -18,6 +19,7 @@ export function PreviewContextMenu({
 	onToggleFullscreen: () => void;
 	containerRef: React.RefObject<HTMLElement | null>;
 }) {
+	const t = useTranslations("preview.contextMenu");
 	const editor = useEditor();
 	const viewport = usePreviewViewport();
 	const { overlays, setOverlayVisibility } = usePreviewStore();
@@ -26,8 +28,8 @@ export function PreviewContextMenu({
 		const result = await editor.renderer.copySnapshot();
 
 		if (!result.success) {
-			toast.error("Failed to copy snapshot", {
-				description: result.error ?? "Please try again",
+			toast.error(t("failedToCopySnapshot"), {
+				description: result.error ?? t("tryAgain"),
 			});
 			return;
 		}
@@ -37,8 +39,8 @@ export function PreviewContextMenu({
 		const result = await editor.renderer.saveSnapshot();
 
 		if (!result.success) {
-			toast.error("Failed to save snapshot", {
-				description: result.error ?? "Please try again",
+			toast.error(t("failedToSaveSnapshot"), {
+				description: result.error ?? t("tryAgain"),
 			});
 			return;
 		}
@@ -47,17 +49,17 @@ export function PreviewContextMenu({
 	return (
 		<ContextMenuContent className="w-56" container={containerRef.current}>
 			<ContextMenuItem onClick={viewport.fitToScreen} inset>
-				Fit to screen
+				{t("fitToScreen")}
 			</ContextMenuItem>
 			<ContextMenuSeparator />
 			<ContextMenuItem onClick={onToggleFullscreen} inset>
-				Full screen
+				{t("fullScreen")}
 			</ContextMenuItem>
 			<ContextMenuItem onClick={handleSaveSnapshot} inset>
-				Save snapshot
+				{t("saveSnapshot")}
 			</ContextMenuItem>
 			<ContextMenuItem onClick={handleCopySnapshot} inset>
-				Copy snapshot
+				{t("copySnapshot")}
 			</ContextMenuItem>
 			<ContextMenuSeparator />
 			<ContextMenuCheckboxItem
@@ -66,7 +68,7 @@ export function PreviewContextMenu({
 					setOverlayVisibility({ overlay: "bookmarks", isVisible: !!checked })
 				}
 			>
-				Show bookmark notes
+				{t("showBookmarkNotes")}
 			</ContextMenuCheckboxItem>
 		</ContextMenuContent>
 	);

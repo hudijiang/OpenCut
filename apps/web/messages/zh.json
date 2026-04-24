@@ -2,16 +2,42 @@
 	"assetPanel": {
 		"tabs": {
 			"media": "媒体",
+			"template": "模板",
 			"sounds": "音效",
 			"text": "文字",
 			"stickers": "贴纸",
 			"effects": "效果",
 			"transitions": "转场",
 			"captions": "字幕",
+			"quickCut": "快剪",
 			"adjustment": "配音",
 			"settings": "设置"
 		},
-		"transitionsComingSoon": "转场面板即将上线..."
+		"transitionsComingSoon": "转场面板即将上线...",
+		"templateAssets": {
+			"title": "模板素材",
+			"description": "直接替换当前模板使用的示例素材，不用再去时间线里逐层查找。",
+			"slot": "槽位",
+			"slotCount": "{count} 个槽位",
+			"accepts": "支持：{types}",
+			"replace": "替换素材",
+			"replacing": "替换中...",
+			"reveal": "在媒体库中定位",
+			"replaceSuccess": "模板素材已更新",
+			"replaceFailed": "替换模板素材失败",
+			"replaceFailedDescription": "请换一个文件再试。",
+			"noTemplateProjectTitle": "当前不是模板项目",
+			"noTemplateProjectDescription": "先从模板创建项目，再回来这里替换模板默认素材。",
+			"emptyTitle": "没有可替换槽位",
+			"emptyDescription": "这个模板暂时没有暴露可替换的媒体槽位。",
+			"missingAsset": "素材缺失",
+			"missingAssetHint": "当前项目里找不到这个素材。",
+			"mediaTypes": {
+				"image": "图片",
+				"video": "视频",
+				"audio": "音频"
+			}
+		}
 	},
 	"editor": {
 		"languageSwitcher": {
@@ -71,6 +97,8 @@
 		"title": "字幕",
 		"import": "导入",
 		"language": "语言",
+		"captionPacing": "字幕节奏",
+		"stylePreset": "字幕样式",
 		"selectLanguage": "选择语言",
 		"autoDetect": "自动检测",
 		"generateTranscript": "生成转录",
@@ -83,7 +111,69 @@
 		"noCaptionsGenerated": "未生成任何字幕",
 		"unexpectedError": "发生意外错误",
 		"noValidSubtitleCues": "字幕文件中未找到有效的字幕条目",
-		"importedWithSkipped": "已导入 {importedCount} 条字幕，跳过 {skippedCount} 条格式错误的字幕。"
+		"importedWithSkipped": "已导入 {importedCount} 条字幕，跳过 {skippedCount} 条格式错误的字幕。",
+		"editableHint": "生成后的字幕会作为可编辑文本片段插入到新的文字轨，并默认整组选中，便于你立刻批量改样式。",
+		"pacingPresets": {
+			"snappy": "紧凑",
+			"balanced": "平衡",
+			"relaxed": "易读"
+		},
+		"stylePresets": {
+			"social-classic": "短视频经典",
+			"punchy-highlight": "高亮强调",
+			"lower-third": "下三分之一"
+		}
+	},
+	"quickCut": {
+		"title": "快剪",
+		"overview": {
+			"title": "口播粗剪工作台",
+			"description": "分析当前场景里的停顿，生成 jump cut 建议，并给口播片段套用居中裁切。"
+		},
+		"scope": {
+			"label": "分析范围",
+			"selection": "当前选中片段",
+			"mainTrack": "主视频轨"
+		},
+		"controls": {
+			"threshold": "静音阈值",
+			"minSilence": "最短静音",
+			"keepPadding": "保留缓冲"
+		},
+		"actions": {
+			"analyze": "分析停顿",
+			"analyzing": "分析中...",
+			"apply": "应用 jump cut",
+			"applying": "应用中...",
+			"autoCenter": "自动居中片段",
+			"centering": "处理中..."
+		},
+		"stats": {
+			"targets": "目标片段",
+			"suggestions": "建议切口",
+			"removable": "预计可删减",
+			"scope": "范围"
+		},
+		"suggestions": {
+			"title": "切口建议",
+			"count": "{count} 条建议",
+			"range": "{start} - {end}",
+			"empty": "先运行分析，生成可删除的静音切口。"
+		},
+		"warnings": {
+			"title": "已跳过片段"
+		},
+		"messages": {
+			"noScene": "当前没有可用场景。",
+			"noTargets": "这个范围内没有可处理的口播片段。",
+			"noSuggestions": "按当前参数没有检测到可删减的静音。",
+			"analysisFailed": "快剪分析失败。",
+			"applied": "已应用 jump cut",
+			"appliedDescription": "已应用 {count} 处切口，预计删减约 {duration}。",
+			"noCenterSuggestions": "没有需要重新居中的片段。",
+			"centerApplied": "已应用自动居中",
+			"centerAppliedDescription": "已更新 {count} 个片段。"
+		}
 	},
 	"dubbing": {
 		"title": "配音",
@@ -286,7 +376,19 @@
 			"projectDescription": "从内置模板或你保存的模板创建新项目。",
 			"sceneDescription": "将已保存的场景模板插入当前项目，或直接替换当前场景。",
 			"templateCount": "{count} 个模板",
-			"slotCount": "{count} 个媒体槽位"
+			"slotCount": "{count} 个媒体槽位",
+			"duration": "时长",
+			"aspectRatio": "比例",
+			"templateType": "模板类型",
+			"projectKind": "项目模板",
+			"sceneKind": "场景模板",
+			"source": "来源",
+			"tags": "标签",
+			"demoAsset": "示例素材",
+			"localDemoAsset": "本地示例素材",
+			"byPhotographer": "素材作者：{name}",
+			"viewSource": "查看素材来源",
+			"previewAlt": "{name} 预览图"
 		},
 		"fields": {
 			"name": "模板名称",
@@ -513,6 +615,44 @@
 			"report": "反馈问题"
 		}
 	},
+	"timeline": {
+		"contextMenu": {
+			"split": "分割",
+			"duplicate": "复制",
+			"collapseKeyframes": "收起关键帧",
+			"expandKeyframes": "展开关键帧",
+			"revealMedia": "在媒体库中显示",
+			"replaceMedia": "替换媒体",
+			"mute": "静音",
+			"unmute": "取消静音",
+			"hide": "隐藏",
+			"show": "显示",
+			"extractAudio": "提取音频",
+			"recoverAudio": "恢复音频",
+			"deleteClip": "删除片段",
+			"deleteText": "删除文字",
+			"deleteElements": "删除 {count} 个元素",
+			"pasteElements": "粘贴元素",
+			"muteTrack": "轨道静音",
+			"unmuteTrack": "取消静音",
+			"hideTrack": "隐藏轨道",
+			"showTrack": "显示轨道",
+			"deleteTrack": "删除轨道",
+			"copy": "复制"
+		}
+	},
+	"preview": {
+		"contextMenu": {
+			"fitToScreen": "适应屏幕",
+			"fullScreen": "全屏",
+			"saveSnapshot": "保存截图",
+			"copySnapshot": "复制截图",
+			"showBookmarkNotes": "显示书签注释",
+			"failedToCopySnapshot": "复制截图失败",
+			"failedToSaveSnapshot": "保存截图失败",
+			"tryAgain": "请重试"
+		}
+	},
 	"pages": {
 		"roadmap": {
 			"metadata": {
@@ -660,6 +800,71 @@
 				"noProjectsTitle": "还没有项目",
 				"noProjectsDescription": "开始创建你的第一个项目吧。导入素材、编辑视频并导出，一切都在本地完成。",
 				"createFirstProject": "创建第一个项目"
+			},
+			"templates": {
+				"eyebrow": "模板工作区",
+				"title": "在项目页直接挑模板并开工",
+				"description": "不用再进弹窗。直接在项目页浏览内置模板和你保存的模板，按分类筛选、查看示例素材、替换默认文件，然后一键创建项目。",
+				"count": "{count} 个模板",
+				"searchPlaceholder": "搜索模板、标签或用途...",
+				"sourceLabel": "来源",
+				"sortLabel": "排序",
+				"slotCountValue": "{count} 个槽位",
+				"usageLabel": "使用次数",
+				"usageValue": "{count} 次",
+				"qualityLabel": "质量等级",
+				"routeLabel": "创建路径",
+				"routeValue": "创建项目 -> 模板素材",
+				"templateFlowHint": "从这里创建的模板项目会默认打开“模板素材”面板，方便你立刻替换示例文件。",
+				"selectTemplateTitle": "先选一个模板",
+				"selectTemplateDescription": "点击左侧模板卡片，即可查看预览、示例素材和媒体槽位。",
+				"actions": {
+					"addFavorite": "收藏",
+					"removeFavorite": "已收藏"
+				},
+				"badges": {
+					"favorite": "收藏",
+					"recommended": "推荐",
+					"recent": "最近使用"
+				},
+				"quality": {
+					"starter": "基础",
+					"curated": "精选",
+					"flagship": "旗舰"
+				},
+				"shelves": {
+					"recommendedTitle": "推荐模板",
+					"recommendedDescription": "按内部质量、你的收藏和最近使用情况排序的模板入口。",
+					"recentTitle": "最近使用",
+					"recentDescription": "不用重新排序，直接回到你最近开过的模板。"
+				},
+				"empty": {
+					"title": "没有匹配的模板",
+					"description": "换个搜索词或筛选条件试试。"
+				},
+				"sources": {
+					"all": "全部",
+					"builtIn": "官方",
+					"user": "我的模板"
+				},
+				"sort": {
+					"recommended": "推荐",
+					"recent": "最近使用"
+				},
+				"categories": {
+					"all": "全部",
+					"social": "社媒",
+					"business": "商业",
+					"travel": "旅行",
+					"meme": "梗图",
+					"education": "教程",
+					"holiday": "节日"
+				},
+				"mediaTypes": {
+					"image": "图片",
+					"video": "视频",
+					"audio": "音频"
+				}
 			}
 		},
 		"brand": {

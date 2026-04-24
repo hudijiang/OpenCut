@@ -82,6 +82,7 @@ import { DragLine } from "./drag-line";
 import { invokeAction } from "@/lib/actions";
 import { resolveTimelineElementIntersections } from "./selection-hit-testing";
 import { cn } from "@/utils/ui";
+import { useTranslations } from "next-intl";
 
 const TRACKS_CONTAINER_MAX_HEIGHT = 800;
 const FALLBACK_CONTAINER_WIDTH = 1000;
@@ -748,6 +749,7 @@ function TimelineTrackRows({
 	isDragOver: boolean;
 	dropTarget: DropTarget | null;
 }) {
+	const t = useTranslations("timeline.contextMenu");
 	const timeline = useEditor((e) => e.timeline);
 	const scene = useEditor((e) => e.scenes.getActiveSceneOrNull());
 	const tracks = useMemo<TimelineTrack[]>(
@@ -835,7 +837,7 @@ function TimelineTrackRows({
 								invokeAction("paste-copied");
 							}}
 						>
-							Paste elements
+							{t("pasteElements")}
 						</ContextMenuItem>
 						<ContextMenuItem
 							icon={<HugeiconsIcon icon={VolumeHighIcon} />}
@@ -845,8 +847,8 @@ function TimelineTrackRows({
 							}}
 						>
 							{canTrackHaveAudio(track) && track.muted
-								? "Unmute track"
-								: "Mute track"}
+								? t("unmuteTrack")
+								: t("muteTrack")}
 						</ContextMenuItem>
 						<ContextMenuItem
 							icon={<HugeiconsIcon icon={ViewIcon} />}
@@ -856,8 +858,8 @@ function TimelineTrackRows({
 							}}
 						>
 							{canTrackBeHidden(track) && track.hidden
-								? "Show track"
-								: "Hide track"}
+								? t("showTrack")
+								: t("hideTrack")}
 						</ContextMenuItem>
 						{track.id !== mainTrackId && (
 							<ContextMenuItem
@@ -868,7 +870,7 @@ function TimelineTrackRows({
 								}}
 								variant="destructive"
 							>
-								Delete track
+								{t("deleteTrack")}
 							</ContextMenuItem>
 						)}
 					</ContextMenuContent>
