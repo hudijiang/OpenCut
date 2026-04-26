@@ -8,28 +8,27 @@ import { SOCIAL_LINKS } from "@/lib/site/social";
 
 type Category = "resources" | "company";
 
-interface FooterLink {
-	key: string;
-	href: string;
-}
-
-type CategoryLinks = Record<Category, FooterLink[]>;
-
-const links: CategoryLinks = {
+const links = {
 	resources: [
-		{ key: "roadmap", href: "/roadmap" },
-		{ key: "changelog", href: "/changelog" },
-		{ key: "blog", href: "/blog" },
-		{ key: "privacy", href: "/privacy" },
-		{ key: "terms", href: "/terms" },
+		{ labelKey: "links.resources.roadmap", href: "/roadmap" },
+		{ labelKey: "links.resources.changelog", href: "/changelog" },
+		{ labelKey: "links.resources.blog", href: "/blog" },
+		{ labelKey: "links.resources.privacy", href: "/privacy" },
+		{ labelKey: "links.resources.terms", href: "/terms" },
 	],
 	company: [
-		{ key: "contributors", href: "/contributors" },
-		{ key: "sponsors", href: "/sponsors" },
-		{ key: "brand", href: "/brand" },
-		{ key: "about", href: `${SOCIAL_LINKS.github}/blob/main/README.md` },
+		{ labelKey: "links.company.contributors", href: "/contributors" },
+		{ labelKey: "links.company.sponsors", href: "/sponsors" },
+		{ labelKey: "links.company.brand", href: "/brand" },
+		{
+			labelKey: "links.company.about",
+			href: `${SOCIAL_LINKS.github}/blob/main/README.md`,
+		},
 	],
-};
+} as const satisfies Record<
+	Category,
+	readonly { labelKey: string; href: string }[]
+>;
 
 export function Footer() {
 	return <TranslatedFooter />;
@@ -108,7 +107,7 @@ async function TranslatedFooter() {
 														: undefined
 												}
 											>
-												{t(`links.${category}.${link.key}`)}
+												{t(link.labelKey)}
 											</Link>
 										</li>
 									))}

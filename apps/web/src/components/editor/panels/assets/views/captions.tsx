@@ -1,6 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { PanelView } from "@/components/editor/panels/assets/views/base-panel";
 import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
 	Select,
 	SelectContent,
 	SelectItem,
@@ -29,6 +35,12 @@ import {
 import { insertCaptionChunksAsTextTrack } from "@/lib/subtitles/insert";
 import { parseSubtitleFile } from "@/lib/subtitles/parse";
 import {
+	collectSubtitleCuesFromTracks,
+	serializeSrt,
+	serializeVtt,
+	type SubtitleExportFormat,
+} from "@/lib/subtitles/export";
+import {
 	applySubtitleStylePresetToCues,
 	DEFAULT_SUBTITLE_STYLE_PRESET,
 	type SubtitleStylePresetId,
@@ -41,7 +53,11 @@ import {
 	SectionField,
 	SectionFields,
 } from "@/components/section";
-import { AlertCircleIcon, CloudUploadIcon } from "@hugeicons/core-free-icons";
+import {
+	AlertCircleIcon,
+	CloudUploadIcon,
+	Download01Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
 	Tooltip,
@@ -52,6 +68,7 @@ import {
 import type { DiagnosticSeverity } from "@/lib/diagnostics/types";
 import { useTranslations } from "next-intl";
 import type { SubtitleCue } from "@/lib/subtitles/types";
+import { downloadBlob } from "@/utils/browser";
 
 const DIAGNOSTIC_BUTTON_VARIANT: Record<
 	DiagnosticSeverity,
@@ -203,6 +220,42 @@ export function Captions() {
 		fileInputRef.current?.click();
 	};
 
+	const handleExportSubtitles = ({
+		format,
+	}: {
+		format: SubtitleExportFormat;
+	}) => {
+		const captions = collectSubtitleCuesFromTracks({
+			tracks: editor.scenes.getActiveScene().tracks,
+		});
+
+		if (captions.length === 0) {
+			dispatch({ type: "fail", error: t("noCaptionsToExport") });
+			return;
+		}
+
+		const content =
+			format === "srt"
+				? serializeSrt({ captions })
+				: serializeVtt({ captions });
+		const activeProject = editor.project.getActiveOrNull();
+		const filenameBase = toSafeFilename({
+			value: activeProject?.metadata.name ?? t("title"),
+		});
+
+		downloadBlob({
+			blob: new Blob([content], {
+				type:
+					format === "srt"
+						? "application/x-subrip;charset=utf-8"
+						: "text/vtt;charset=utf-8",
+			}),
+			filename: `${filenameBase}.${format}`,
+		});
+
+		dispatch({ type: "succeed", warnings: [] });
+	};
+
 	const handleImportFile = async ({ file }: { file: File }) => {
 		dispatch({ type: "start", step: t("readingSubtitleFile") });
 		try {
@@ -325,6 +378,36 @@ export function Captions() {
 							<HugeiconsIcon icon={CloudUploadIcon} />
 							{t("import")}
 						</Button>
+						<DropdownMenu>
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<DropdownMenuTrigger asChild>
+										<Button
+											type="button"
+											variant="outline"
+											size="icon"
+											disabled={isProcessing}
+											aria-label={t("export")}
+										>
+											<HugeiconsIcon icon={Download01Icon} size={16} />
+										</Button>
+									</DropdownMenuTrigger>
+								</TooltipTrigger>
+								<TooltipContent>{t("export")}</TooltipContent>
+							</Tooltip>
+							<DropdownMenuContent align="end">
+								<DropdownMenuItem
+									onClick={() => handleExportSubtitles({ format: "srt" })}
+								>
+									{t("exportSrt")}
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									onClick={() => handleExportSubtitles({ format: "vtt" })}
+								>
+									{t("exportVtt")}
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
 					</div>
 				</TooltipProvider>
 			}
@@ -434,4 +517,20 @@ export function Captions() {
 			</Section>
 		</PanelView>
 	);
+}
+
+function toSafeFilename({ value }: { value: string }): string {
+	const filename = Array.from(value.trim())
+		.map((character) => {
+			const code = character.charCodeAt(0);
+			if (code < 32 || '<>:"/\\|?*'.includes(character)) return "-";
+			return character;
+		})
+		.join("")
+		.trim()
+		.replace(/\s+/g, " ")
+		.replace(/\.+$/g, "")
+		.slice(0, 80);
+
+	return filename || "captions";
 }

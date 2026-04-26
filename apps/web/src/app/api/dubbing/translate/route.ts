@@ -15,7 +15,7 @@ const segmentSchema = z.object({
 const postSchema = z.object({
 	segments: z.array(segmentSchema),
 	targetLanguage: z.string().min(1, "targetLanguage is required"),
-	openaiApiKey: z.string().min(1, "OpenAI API key is required"),
+	deepSeekApiKey: z.string().min(1, "DeepSeek API key is required"),
 });
 
 export async function POST(request: NextRequest) {
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 		const translatedSegments = await translateSegments(
 			segments,
 			parsed.data.targetLanguage,
-			parsed.data.openaiApiKey,
+			parsed.data.deepSeekApiKey,
 		);
 
 		return NextResponse.json({ translatedSegments }, { status: 200 });

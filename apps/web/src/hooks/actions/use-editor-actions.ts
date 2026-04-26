@@ -341,6 +341,29 @@ export function useEditorActions() {
 	);
 
 	useActionHandler(
+		"freeze-frame",
+		() => {
+			void editor.timeline.freezeFrame();
+		},
+		undefined,
+	);
+
+	useActionHandler(
+		"apply-fade-transition",
+		() => {
+			const targets =
+				selectedElements.length > 0
+					? selectedElements
+					: getElementsAtTime({
+							tracks: editor.scenes.getActiveScene().tracks,
+							time: editor.playback.getCurrentTime(),
+						});
+			editor.timeline.applyFadeTransition({ elements: targets });
+		},
+		undefined,
+	);
+
+	useActionHandler(
 		"select-all",
 		() => {
 			const scene = editor.scenes.getActiveScene();

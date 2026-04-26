@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/utils/ui";
 import {
 	getExportMimeType,
@@ -24,8 +25,10 @@ import { Check, Copy, Download, RotateCcw } from "lucide-react";
 import {
 	EXPORT_FORMAT_VALUES,
 	EXPORT_QUALITY_VALUES,
+	EXPORT_RESOLUTION_VALUES,
 	type ExportFormat,
 	type ExportQuality,
+	type ExportResolution,
 } from "@/lib/export";
 import {
 	Section,
@@ -35,6 +38,18 @@ import {
 } from "@/components/section";
 import { useEditor } from "@/hooks/use-editor";
 import { DEFAULT_EXPORT_OPTIONS } from "@/lib/export/defaults";
+import type { MediaAsset } from "@/lib/media/types";
+import type { TBackground } from "@/lib/project/types";
+import {
+	canElementHaveAudio,
+	hasMediaId,
+} from "@/lib/timeline/element-utils";
+import type { SceneTracks, TimelineTrack } from "@/lib/timeline/types";
+
+type ExportPreflightIssue = {
+	severity: "error" | "warning";
+	message: string;
+};
 
 function isExportFormat(value: string): value is ExportFormat {
 	return EXPORT_FORMAT_VALUES.some((formatValue) => formatValue === value);
@@ -42,6 +57,12 @@ function isExportFormat(value: string): value is ExportFormat {
 
 function isExportQuality(value: string): value is ExportQuality {
 	return EXPORT_QUALITY_VALUES.some((qualityValue) => qualityValue === value);
+}
+
+function isExportResolution(value: string): value is ExportResolution {
+	return EXPORT_RESOLUTION_VALUES.some(
+		(resolutionValue) => resolutionValue === value,
+	);
 }
 
 export function ExportButton() {
@@ -148,6 +169,10 @@ function ExportPopover({
 	const editor = useEditor();
 	const activeProject = useEditor((e) => e.project.getActive());
 	const exportState = useEditor((e) => e.project.getExportState());
+	const activeScene = useEditor((e) => e.scenes.getActiveScene());
+	const mediaAssets = useEditor((e) => e.media.getAssets());
+	const totalDuration = useEditor((e) => e.timeline.getTotalDuration());
+	const t = useTranslations("editor.export");
 	const { isExporting, progress, result: exportResult } = exportState;
 	const [format, setFormat] = useState<ExportFormat>(
 		DEFAULT_EXPORT_OPTIONS.format,
@@ -155,17 +180,53 @@ function ExportPopover({
 	const [quality, setQuality] = useState<ExportQuality>(
 		DEFAULT_EXPORT_OPTIONS.quality,
 	);
+	const [resolution, setResolution] = useState<ExportResolution>(
+		DEFAULT_EXPORT_OPTIONS.resolution,
+	);
+	const [bitrateMbps, setBitrateMbps] = useState("");
 	const [shouldIncludeAudio, setShouldIncludeAudio] = useState<boolean>(
 		DEFAULT_EXPORT_OPTIONS.includeAudio ?? true,
+	);
+	const parsedBitrateMbps = Number.parseFloat(bitrateMbps);
+	const bitrate =
+		Number.isFinite(parsedBitrateMbps) && parsedBitrateMbps > 0
+			? Math.round(parsedBitrateMbps * 1_000_000)
+			: undefined;
+	const estimatedFileSize =
+		bitrate && activeProject.metadata.duration > 0
+			? formatEstimatedBytes({
+					bytes: Math.round(
+						(bitrate * (activeProject.metadata.duration / 120_000)) / 8,
+					),
+				})
+			: null;
+	const preflightIssues = buildExportPreflightIssues({
+		tracks: activeScene.tracks,
+		mediaAssets,
+		duration: totalDuration,
+		includeAudio: shouldIncludeAudio,
+		background: activeProject.settings.background,
+		messages: {
+			emptyTimeline: t("preflightEmptyTimeline"),
+			missingMedia: (names) => t("preflightMissingMedia", { names }),
+			noAudio: t("preflightNoAudio"),
+			transparentBackground: t("preflightTransparentBackground"),
+		},
+	});
+	const hasPreflightErrors = preflightIssues.some(
+		(issue) => issue.severity === "error",
 	);
 
 	const handleExport = async () => {
 		if (!activeProject) return;
+		if (hasPreflightErrors) return;
 
 		const result = await editor.project.export({
 			options: {
 				format,
 				quality,
+				resolution,
+				bitrate,
 				fps: activeProject.settings.fps,
 				includeAudio: shouldIncludeAudio,
 			},
@@ -275,6 +336,69 @@ function ExportPopover({
 
 									<Section collapsible defaultOpen={false}>
 										<SectionHeader>
+											<SectionTitle>{t("resolution")}</SectionTitle>
+										</SectionHeader>
+										<SectionContent>
+											<RadioGroup
+												value={resolution}
+												onValueChange={(value) => {
+													if (isExportResolution(value)) {
+														setResolution(value);
+													}
+												}}
+											>
+												<div className="flex items-center space-x-2">
+													<RadioGroupItem value="source" id="source" />
+													<Label htmlFor="source">{t("resolutionSource")}</Label>
+												</div>
+												<div className="flex items-center space-x-2">
+													<RadioGroupItem value="720p" id="720p" />
+													<Label htmlFor="720p">720p</Label>
+												</div>
+												<div className="flex items-center space-x-2">
+													<RadioGroupItem value="1080p" id="1080p" />
+													<Label htmlFor="1080p">1080p</Label>
+												</div>
+												<div className="flex items-center space-x-2">
+													<RadioGroupItem value="2160p" id="2160p" />
+													<Label htmlFor="2160p">4K</Label>
+												</div>
+											</RadioGroup>
+										</SectionContent>
+									</Section>
+
+									<Section collapsible defaultOpen={false}>
+										<SectionHeader>
+											<SectionTitle>{t("bitrate")}</SectionTitle>
+										</SectionHeader>
+										<SectionContent>
+											<div className="flex flex-col gap-2">
+												<div className="flex items-center gap-2">
+													<Input
+														inputMode="decimal"
+														value={bitrateMbps}
+														placeholder={t("bitrateAuto")}
+														onChange={(event) =>
+															setBitrateMbps(event.target.value)
+														}
+													/>
+													<span className="text-muted-foreground text-xs">
+														Mbps
+													</span>
+												</div>
+												{estimatedFileSize ? (
+													<p className="text-muted-foreground text-xs">
+														{t("estimatedSize", {
+															size: estimatedFileSize,
+														})}
+													</p>
+												) : null}
+											</div>
+										</SectionContent>
+									</Section>
+
+									<Section collapsible defaultOpen={false}>
+										<SectionHeader>
 											<SectionTitle>{audioLabel}</SectionTitle>
 										</SectionHeader>
 										<SectionContent>
@@ -295,7 +419,12 @@ function ExportPopover({
 								</div>
 
 								<div className="p-3 pt-0">
-									<Button onClick={handleExport} className="w-full gap-2">
+									<ExportPreflight issues={preflightIssues} />
+									<Button
+										onClick={handleExport}
+										className="mt-3 w-full gap-2"
+										disabled={hasPreflightErrors}
+									>
 										<Download className="size-4" />
 										{exportLabel}
 									</Button>
@@ -320,7 +449,7 @@ function ExportPopover({
 									className="w-full rounded-md"
 									onClick={handleCancel}
 								>
-									Cancel
+									{t("cancel")}
 								</Button>
 							</div>
 						)}
@@ -328,6 +457,164 @@ function ExportPopover({
 				</>
 			)}
 		</PopoverContent>
+	);
+}
+
+function ExportPreflight({ issues }: { issues: ExportPreflightIssue[] }) {
+	const t = useTranslations("editor.export");
+	const hasErrors = issues.some((issue) => issue.severity === "error");
+	const hasWarnings = issues.some((issue) => issue.severity === "warning");
+
+	return (
+		<div
+			className={cn(
+				"rounded-md border p-3 text-xs",
+				hasErrors
+					? "border-destructive/30 bg-destructive/10"
+					: hasWarnings
+						? "border-amber-500/25 bg-amber-500/10"
+						: "border-constructive/25 bg-constructive/10",
+			)}
+		>
+			<p
+				className={cn(
+					"font-medium",
+					hasErrors
+						? "text-destructive"
+						: hasWarnings
+							? "text-amber-700"
+							: "text-constructive",
+				)}
+			>
+				{t("preflightTitle")}
+			</p>
+			{issues.length > 0 ? (
+				<ul className="mt-2 space-y-1 text-muted-foreground">
+					{issues.map((issue) => (
+						<li key={`${issue.severity}-${issue.message}`}>{issue.message}</li>
+					))}
+				</ul>
+			) : (
+				<p className="mt-1 text-muted-foreground">{t("preflightPassed")}</p>
+			)}
+		</div>
+	);
+}
+
+function formatEstimatedBytes({ bytes }: { bytes: number }): string {
+	if (bytes < 1024 * 1024) {
+		return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+	}
+	if (bytes < 1024 * 1024 * 1024) {
+		return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+	}
+	return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
+function buildExportPreflightIssues({
+	tracks,
+	mediaAssets,
+	duration,
+	includeAudio,
+	background,
+	messages,
+}: {
+	tracks: SceneTracks;
+	mediaAssets: MediaAsset[];
+	duration: number;
+	includeAudio: boolean;
+	background: TBackground;
+	messages: {
+		emptyTimeline: string;
+		missingMedia: (names: string) => string;
+		noAudio: string;
+		transparentBackground: string;
+	};
+}): ExportPreflightIssue[] {
+	const issues: ExportPreflightIssue[] = [];
+
+	if (duration <= 0) {
+		issues.push({ severity: "error", message: messages.emptyTimeline });
+	}
+
+	const mediaIds = new Set(mediaAssets.map((asset) => asset.id));
+	const missingMediaNames = collectTimelineTracks({ tracks })
+		.flatMap((track) =>
+			track.elements
+				.filter(hasMediaId)
+				.filter((element) => !mediaIds.has(element.mediaId))
+				.map((element) => element.name),
+		)
+		.filter((name, index, names) => names.indexOf(name) === index);
+
+	if (missingMediaNames.length > 0) {
+		issues.push({
+			severity: "error",
+			message: messages.missingMedia(missingMediaNames.join(", ")),
+		});
+	}
+
+	if (includeAudio && !hasTimelineAudio({ tracks, mediaAssets })) {
+		issues.push({ severity: "warning", message: messages.noAudio });
+	}
+
+	if (isTransparentBackground({ background })) {
+		issues.push({
+			severity: "warning",
+			message: messages.transparentBackground,
+		});
+	}
+
+	return issues;
+}
+
+function collectTimelineTracks({ tracks }: { tracks: SceneTracks }): TimelineTrack[] {
+	return [...tracks.overlay, tracks.main, ...tracks.audio];
+}
+
+function hasTimelineAudio({
+	tracks,
+	mediaAssets,
+}: {
+	tracks: SceneTracks;
+	mediaAssets: MediaAsset[];
+}): boolean {
+	const assetsById = new Map(mediaAssets.map((asset) => [asset.id, asset]));
+
+	for (const track of collectTimelineTracks({ tracks })) {
+		if ("muted" in track && track.muted) continue;
+
+		for (const element of track.elements) {
+			if (!canElementHaveAudio(element) || element.muted) continue;
+			if (element.type === "video") {
+				const asset = assetsById.get(element.mediaId);
+				if (asset?.hasAudio !== false && element.isSourceAudioEnabled !== false) {
+					return true;
+				}
+				continue;
+			}
+			if (element.sourceType === "library" || assetsById.has(element.mediaId)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+function isTransparentBackground({
+	background,
+}: {
+	background: TBackground;
+}): boolean {
+	if (background.type !== "color") return false;
+	const color = background.color.trim().toLowerCase();
+	return (
+		color === "transparent" ||
+		color === "#0000" ||
+		color === "#00000000" ||
+		color === "rgba(0, 0, 0, 0)" ||
+		color === "rgb(0 0 0 / 0%)"
 	);
 }
 

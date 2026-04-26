@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { BasePage } from "@/app/base-page";
 import { Separator } from "@/components/ui/separator";
+import type { Locale } from "@/i18n/routing";
 import {
 	type Release as ReleaseType,
 	getSortedReleases,
@@ -15,7 +16,7 @@ import {
 } from "@/lib/changelog/components/release";
 
 type Props = {
-	params: Promise<{ locale: string }>;
+	params: Promise<{ locale: Locale }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

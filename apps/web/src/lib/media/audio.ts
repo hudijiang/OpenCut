@@ -4,6 +4,7 @@ import type {
 	LibraryAudioElement,
 	RetimeConfig,
 	SceneTracks,
+	TimelineElement,
 } from "@/lib/timeline";
 import { shouldMaintainPitch } from "@/lib/retime/rate";
 import type { MediaAsset } from "@/lib/media/types";
@@ -17,6 +18,10 @@ import { doesElementHaveEnabledAudio } from "@/lib/timeline/audio-separation";
 import { canElementHaveAudio, hasMediaId } from "@/lib/timeline/element-utils";
 import { canTrackHaveAudio } from "@/lib/timeline";
 import { mediaSupportsAudio } from "@/lib/media/media-utils";
+import {
+	isDubbingOutputElement,
+	isDubbingOutputName,
+} from "@/lib/dubbing/timeline";
 import { getSourceTimeAtClipTime, renderRetimedBuffer } from "@/lib/retime";
 import { Input, ALL_FORMATS, BlobSource, AudioBufferSink } from "mediabunny";
 import { TICKS_PER_SECOND } from "@/lib/wasm";
@@ -90,27 +95,62 @@ export interface AudibleElementCandidate {
 	mediaAsset: MediaAsset | null;
 }
 
+export interface AudioCollectionOptions {
+	excludeDubbingOutput?: boolean;
+	includeTracksMutedByDubbing?: boolean;
+}
+
 export function collectAudibleCandidates({
 	tracks,
 	mediaAssets,
+	excludeDubbingOutput = false,
+	includeTracksMutedByDubbing = false,
 }: {
 	tracks: SceneTracks;
 	mediaAssets: MediaAsset[];
-}): AudibleElementCandidate[] {
+} & AudioCollectionOptions): AudibleElementCandidate[] {
 	const allTracks = [...tracks.overlay, tracks.main, ...tracks.audio];
 	const mediaMap = new Map(mediaAssets.map((a) => [a.id, a]));
 	const candidates: AudibleElementCandidate[] = [];
+	const hasDubbingOutput = allTracks.some((track) =>
+		track.elements.some((element) => {
+			if (!canElementHaveAudio(element)) {
+				return false;
+			}
+			const mediaAsset = hasMediaId(element)
+				? (mediaMap.get(element.mediaId) ?? null)
+				: null;
+			return isDubbingOutputCandidate({ element, mediaAsset });
+		}),
+	);
 
 	for (const track of allTracks) {
-		if (canTrackHaveAudio(track) && track.muted) continue;
+		if (
+			canTrackHaveAudio(track) &&
+			track.muted &&
+			!(
+				includeTracksMutedByDubbing &&
+				(track.mutedByDubbing ||
+					(hasDubbingOutput && !trackHasDubbingOutput({ track, mediaMap })))
+			)
+		) {
+			continue;
+		}
 
 		for (const element of track.elements) {
 			if (!canElementHaveAudio(element)) continue;
+			if (excludeDubbingOutput && isDubbingOutputElement(element)) continue;
 			if (element.duration <= 0) continue;
 
 			const mediaAsset = hasMediaId(element)
 				? (mediaMap.get(element.mediaId) ?? null)
 				: null;
+			if (
+				excludeDubbingOutput &&
+				isDubbingOutputCandidate({ element, mediaAsset })
+			) {
+				continue;
+			}
 			if (!doesElementHaveEnabledAudio({ element, mediaAsset })) continue;
 
 			candidates.push({ element, mediaAsset });
@@ -120,28 +160,72 @@ export function collectAudibleCandidates({
 	return candidates;
 }
 
+function isDubbingOutputCandidate({
+	element,
+	mediaAsset,
+}: {
+	element: AudioElement | VideoElement;
+	mediaAsset: MediaAsset | null;
+}): boolean {
+	return (
+		isDubbingOutputElement(element) ||
+		isDubbingOutputName(mediaAsset?.name) ||
+		isDubbingOutputName(mediaAsset?.file.name)
+	);
+}
+
+function trackHasDubbingOutput({
+	track,
+	mediaMap,
+}: {
+	track: { elements: Array<AudioElement | VideoElement | TimelineElement> };
+	mediaMap: Map<string, MediaAsset>;
+}): boolean {
+	return track.elements.some((element) => {
+		if (!canElementHaveAudio(element)) {
+			return false;
+		}
+		const mediaAsset = hasMediaId(element)
+			? (mediaMap.get(element.mediaId) ?? null)
+			: null;
+		return isDubbingOutputCandidate({ element, mediaAsset });
+	});
+}
+
 export function timelineHasAudio({
 	tracks,
 	mediaAssets,
+	excludeDubbingOutput,
+	includeTracksMutedByDubbing,
 }: {
 	tracks: SceneTracks;
 	mediaAssets: MediaAsset[];
-}): boolean {
-	return collectAudibleCandidates({ tracks, mediaAssets }).some(
-		({ element }) => element.muted !== true,
-	);
+} & AudioCollectionOptions): boolean {
+	return collectAudibleCandidates({
+		tracks,
+		mediaAssets,
+		excludeDubbingOutput,
+		includeTracksMutedByDubbing,
+	}).some(({ element }) => element.muted !== true);
 }
 
 export async function collectAudioElements({
 	tracks,
 	mediaAssets,
 	audioContext,
+	excludeDubbingOutput,
+	includeTracksMutedByDubbing,
 }: {
 	tracks: SceneTracks;
 	mediaAssets: MediaAsset[];
 	audioContext: AudioContext;
-}): Promise<CollectedAudioElement[]> {
-	const candidates = collectAudibleCandidates({ tracks, mediaAssets });
+} & AudioCollectionOptions): Promise<CollectedAudioElement[]> {
+	const candidates = collectAudibleCandidates({
+		tracks,
+		mediaAssets,
+		excludeDubbingOutput,
+		includeTracksMutedByDubbing,
+	});
 	const mediaMap = new Map<string, MediaAsset>(
 		mediaAssets.map((media) => [media.id, media]),
 	);
@@ -629,19 +713,23 @@ export async function createTimelineAudioBuffer({
 	duration,
 	sampleRate = EXPORT_SAMPLE_RATE,
 	audioContext,
+	excludeDubbingOutput,
+	includeTracksMutedByDubbing,
 }: {
 	tracks: SceneTracks;
 	mediaAssets: MediaAsset[];
 	duration: number;
 	sampleRate?: number;
 	audioContext?: AudioContext;
-}): Promise<AudioBuffer | null> {
+} & AudioCollectionOptions): Promise<AudioBuffer | null> {
 	const context = audioContext ?? createAudioContext({ sampleRate });
 
 	const audioElements = await collectAudioElements({
 		tracks,
 		mediaAssets,
 		audioContext: context,
+		excludeDubbingOutput,
+		includeTracksMutedByDubbing,
 	});
 
 	if (audioElements.length === 0) return null;

@@ -1,7 +1,4 @@
-import type {
-	KeybindingConfig,
-	ShortcutKey,
-} from "@/lib/actions/keybinding";
+import type { KeybindingConfig, ShortcutKey } from "@/lib/actions/keybinding";
 import type { TActionWithOptionalArgs } from "./types";
 
 export type TActionCategory =
@@ -105,6 +102,14 @@ export const ACTIONS = {
 		description: "Extract or recover source audio",
 		category: "editing",
 	},
+	"freeze-frame": {
+		description: "Freeze the current frame",
+		category: "editing",
+	},
+	"apply-fade-transition": {
+		description: "Apply fade transition",
+		category: "editing",
+	},
 	"select-all": {
 		description: "Select all elements",
 		category: "selection",
@@ -172,12 +177,19 @@ const ACTION_DEFAULT_SHORTCUTS = {
 	"copy-selected": ["ctrl+c"],
 	"paste-copied": ["ctrl+v"],
 	"toggle-snapping": ["n"],
+	"toggle-ripple-editing": ["t"],
+	"toggle-source-audio": ["a"],
+	"freeze-frame": ["f"],
 	"select-all": ["ctrl+a"],
 	"cancel-interaction": ["escape"],
 	"duplicate-selected": ["ctrl+d"],
+	"toggle-elements-muted-selected": ["m"],
+	"toggle-bookmark": ["b"],
 	undo: ["ctrl+z"],
 	redo: ["ctrl+shift+z", "ctrl+y"],
-} as const satisfies Partial<Record<TActionWithOptionalArgs, readonly ShortcutKey[]>>;
+} as const satisfies Partial<
+	Record<TActionWithOptionalArgs, readonly ShortcutKey[]>
+>;
 
 const ACTION_DEFAULT_SHORTCUTS_BY_ACTION: Partial<
 	Record<TAction, readonly ShortcutKey[]>

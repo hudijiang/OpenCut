@@ -3,11 +3,12 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { BasePage } from "@/app/base-page";
 import { Separator } from "@/components/ui/separator";
+import type { Locale } from "@/i18n/routing";
 import { getPosts } from "@/lib/blog/query";
 import type { Post } from "@/lib/blog/types";
 
 type Props = {
-	params: Promise<{ locale: string }>;
+	params: Promise<{ locale: Locale }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

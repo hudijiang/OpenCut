@@ -137,6 +137,57 @@ export function MediaView() {
 		});
 	};
 
+	const handleReplace = ({ item }: { item: MediaAsset }) => {
+		const input = document.createElement("input");
+		input.type = "file";
+		input.accept =
+			item.type === "image"
+				? "image/*"
+				: item.type === "video"
+					? "video/*"
+					: "audio/*";
+		input.onchange = async () => {
+			const file = input.files?.[0];
+			if (!file) return;
+
+			setIsProcessing(true);
+			setProgress(0);
+			try {
+				await showMediaUploadToast({
+					filesCount: 1,
+					promise: async () => {
+						const [processedAsset] = await processMediaAssets({
+							files: [file],
+							onProgress: ({ progress }) => setProgress(progress),
+						});
+						if (!processedAsset) {
+							throw new Error("Could not process replacement media");
+						}
+						const replacement = await editor.media.replaceMediaAsset({
+							projectId: activeProject.metadata.id,
+							oldId: item.id,
+							asset: processedAsset,
+						});
+						if (!replacement) {
+							throw new Error("Could not replace media");
+						}
+						return {
+							uploadedCount: 1,
+							assetNames: [replacement.name],
+						};
+					},
+				});
+			} catch (error) {
+				console.error("Error replacing media:", error);
+			} finally {
+				setIsProcessing(false);
+				setProgress(0);
+				input.remove();
+			}
+		};
+		input.click();
+	};
+
 	const handleSort = ({ key }: { key: MediaSortKey }) => {
 		if (mediaSortBy === key) {
 			setMediaSort(key, mediaSortOrder === "asc" ? "desc" : "asc");
@@ -224,6 +275,7 @@ export function MediaView() {
 							items={filteredMediaItems}
 							mode={mediaViewMode}
 							onRemove={handleRemove}
+							onReplace={handleReplace}
 						/>
 					</SelectableSurface>
 				)}
@@ -301,6 +353,7 @@ function MediaItemWithContextMenu({
 	item,
 	children,
 	onRemove,
+	onReplace,
 }: {
 	item: MediaAsset;
 	children: React.ReactNode;
@@ -311,6 +364,7 @@ function MediaItemWithContextMenu({
 		event: React.MouseEvent;
 		ids: string[];
 	}) => void;
+	onReplace: ({ item }: { item: MediaAsset }) => void;
 }) {
 	const { isSelected, selectedIds } = useSelection();
 	const idsToDelete = isSelected(item.id) ? selectedIds : [item.id];
@@ -322,6 +376,9 @@ function MediaItemWithContextMenu({
 			<ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
 			<ContextMenuContent>
 				<ContextMenuItem>Export clips</ContextMenuItem>
+				<ContextMenuItem onClick={() => onReplace({ item })}>
+					Replace media
+				</ContextMenuItem>
 				<ContextMenuItem
 					variant="destructive"
 					onClick={(event: React.MouseEvent<HTMLDivElement>) =>
@@ -339,6 +396,7 @@ function MediaItemList({
 	items,
 	mode,
 	onRemove,
+	onReplace,
 }: {
 	items: MediaAsset[];
 	mode: MediaViewMode;
@@ -349,6 +407,7 @@ function MediaItemList({
 		event: React.MouseEvent;
 		ids: string[];
 	}) => void;
+	onReplace: ({ item }: { item: MediaAsset }) => void;
 }) {
 	const isGrid = mode === "grid";
 
@@ -360,7 +419,12 @@ function MediaItemList({
 			}
 		>
 			{items.map((item) => (
-				<MediaItemWithContextMenu item={item} onRemove={onRemove} key={item.id}>
+				<MediaItemWithContextMenu
+					item={item}
+					onRemove={onRemove}
+					onReplace={onReplace}
+					key={item.id}
+				>
 					<SelectableItem className={cn(!isGrid && "w-full")} id={item.id}>
 						<MediaAssetDraggable
 							item={item}

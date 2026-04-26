@@ -6,7 +6,6 @@ import { SceneExporter } from "@/services/renderer/scene-exporter";
 import { buildScene } from "@/services/renderer/scene-builder";
 import { createTimelineAudioBuffer } from "@/lib/media/audio";
 import { formatTimecode } from "opencut-wasm";
-import { frameRateToFloat } from "@/lib/fps/utils";
 import { downloadBlob } from "@/utils/browser";
 
 type SnapshotResult =
@@ -47,6 +46,39 @@ export class RendererManager {
 
 		downloadBlob({ blob: snapshot.blob, filename: snapshot.filename });
 		return { success: true };
+	}
+
+	async createFrameImageFile(): Promise<
+		| {
+				success: true;
+				file: File;
+				url: string;
+				thumbnailUrl: string;
+				width: number;
+				height: number;
+		  }
+		| { success: false; error: string }
+	> {
+		const snapshot = await this.createSnapshot();
+		if (!snapshot.success) {
+			return snapshot;
+		}
+
+		const activeProject = this.editor.project.getActive();
+		const file = new File([snapshot.blob], snapshot.filename, {
+			type: snapshot.blob.type || "image/png",
+			lastModified: Date.now(),
+		});
+		const thumbnailUrl = await blobToDataUrl({ blob: snapshot.blob });
+
+		return {
+			success: true,
+			file,
+			url: URL.createObjectURL(file),
+			thumbnailUrl,
+			width: activeProject.settings.canvasSize.width,
+			height: activeProject.settings.canvasSize.height,
+		};
 	}
 
 	async copySnapshot(): Promise<{ success: boolean; error?: string }> {
@@ -122,7 +154,9 @@ export class RendererManager {
 				return { success: false, error: "Failed to create image" };
 			}
 
-			const timecode = formatTimecode({ time: renderTime, rate: fps })!.replace(/:/g, "-");
+			const timecode =
+				formatTimecode({ time: renderTime, rate: fps })?.replace(/:/g, "-") ??
+				"00-00-00-00";
 			const safeName =
 				activeProject.metadata.name.replace(/[<>:"/\\|?*]/g, "-").trim() ||
 				"snapshot";
@@ -147,7 +181,7 @@ export class RendererManager {
 		onProgress?: ({ progress }: { progress: number }) => void;
 		onCancel?: () => boolean;
 	}): Promise<ExportResult> {
-		const { format, quality, fps, includeAudio } = options;
+		const { format, quality, resolution, bitrate, fps, includeAudio } = options;
 
 		try {
 			const tracks = this.editor.scenes.getActiveScene().tracks;
@@ -164,7 +198,10 @@ export class RendererManager {
 			}
 
 			const exportFps = fps ?? activeProject.settings.fps;
-			const canvasSize = activeProject.settings.canvasSize;
+			const canvasSize = getExportCanvasSize({
+				source: activeProject.settings.canvasSize,
+				resolution,
+			});
 
 			let audioBuffer: AudioBuffer | null = null;
 			if (includeAudio) {
@@ -190,6 +227,7 @@ export class RendererManager {
 				fps: exportFps,
 				format,
 				quality,
+				bitrate,
 				shouldIncludeAudio: !!includeAudio,
 				audioBuffer: audioBuffer || undefined,
 			});
@@ -249,4 +287,48 @@ export class RendererManager {
 			fn();
 		});
 	}
+}
+
+function blobToDataUrl({ blob }: { blob: Blob }): Promise<string> {
+	return new Promise((resolve, reject) => {
+		const reader = new FileReader();
+		reader.addEventListener("load", () => {
+			if (typeof reader.result === "string") {
+				resolve(reader.result);
+				return;
+			}
+			reject(new Error("Failed to read frame image"));
+		});
+		reader.addEventListener("error", () => reject(reader.error));
+		reader.readAsDataURL(blob);
+	});
+}
+
+function getExportCanvasSize({
+	source,
+	resolution,
+}: {
+	source: { width: number; height: number };
+	resolution?: ExportOptions["resolution"];
+}): { width: number; height: number } {
+	if (!resolution || resolution === "source") {
+		return source;
+	}
+
+	const targetHeightByPreset = {
+		"720p": 720,
+		"1080p": 1080,
+		"2160p": 2160,
+	} satisfies Record<
+		Exclude<ExportOptions["resolution"], "source" | undefined>,
+		number
+	>;
+	const targetHeight = targetHeightByPreset[resolution];
+	const aspectRatio = source.width / source.height;
+	const width = Math.max(2, Math.round((targetHeight * aspectRatio) / 2) * 2);
+
+	return {
+		width,
+		height: targetHeight,
+	};
 }

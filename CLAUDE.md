@@ -120,5 +120,43 @@ pub fn my_function(x: f64) -> f64 { x }
 - Use `for...of` instead of `Array.forEach`
 - No array index as React key
 - `onClick` must be accompanied by `onKeyUp`, `onKeyDown`, or `onKeyPress`
+- `onMouseOver`/`onMouseOut` must be accompanied by `onFocus`/`onBlur`
 - No `<img>` or `<head>` elements (use Next.js `<Image>` and `<Head>`)
 - Use `===`/`!==`, no `var`, no nested ternaries
+- Don't define React components inside other components
+- Read existing components before using them — they may already apply classes that affect how you override them
+
+## Contribution scope
+
+**Avoid touching during current refactor:**
+- Preview panel (text fonts, stickers, effects rendering)
+- Export functionality
+
+These are being replaced with a binary rendering approach (wgpu-based, matching CapCut's model). Changes here will be discarded.
+
+## Common multi-file patterns
+
+### Adding a new action (keyboard shortcut / UI button)
+
+1. Define in `src/lib/actions/definitions.ts` — add entry to `ACTIONS` with `description`, `category`, optional `defaultShortcuts` and `args`
+2. Register handler in `src/hooks/actions/use-editor-actions.ts` via `useActionHandler`
+3. If the action takes args, add its type to `TActionArgsMap` in `src/lib/actions/types.ts`
+4. If it has a `defaultShortcuts`, add a keybindings migration in `src/stores/keybindings/migrations/` and bump `CURRENT_VERSION` — keybindings are persisted in localStorage, so new defaults only apply to fresh installs
+
+Invoke actions from UI with `invokeAction("action-id")` — never call `editor.xxx()` directly from components.
+
+### Adding a new GPU effect
+
+1. Create `src/lib/effects/definitions/<name>.ts` exporting an `EffectDefinition` (use `blur.ts` as reference)
+2. Register in `src/lib/effects/definitions/index.ts`
+3. Add WGSL shader to `rust/crates/gpu/src/shaders/`
+4. Register shader identifier in `rust/crates/gpu/src/shader_registry.rs`
+
+Always resolve passes via `resolveEffectPasses()` — never access `definition.renderer.passes` directly. Use `buildPasses` for variable pass counts (e.g. blur at high intensity).
+
+### Adding a new animatable property (keyframes)
+
+1. Add path to `ANIMATION_PROPERTY_PATHS` in `src/types/animation.ts`
+2. Add registry entry in `src/lib/animation/property-registry.ts` with `valueKind`, `supportsElement`, `getValue`, `setValue`
+3. Call `resolveNumberAtTime` / `resolveColorAtTime` in the renderer node (`src/services/renderer/nodes/`)
+4. Replace `usePropertyDraft` with `useKeyframedNumberProperty` or `useKeyframedColorProperty` in the properties panel and add a `KeyframeToggle` to the field

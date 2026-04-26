@@ -25,6 +25,10 @@ target/
 
 .cargo-tools/
 
+# Local dev/runtime artifacts
+.dev-server.*.log
+xtts-voices/
+
 # Claude Code workspace
 .claude/
 

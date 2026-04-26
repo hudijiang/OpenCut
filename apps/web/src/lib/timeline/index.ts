@@ -1,6 +1,7 @@
 import type { SceneTracks } from "./types";
 
 export * from "./types";
+export * from "./transitions";
 export * from "./drag";
 export * from "./track-capabilities";
 export * from "./track-element-update";

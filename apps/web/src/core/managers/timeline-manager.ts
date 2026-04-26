@@ -7,10 +7,13 @@ import type {
 	TimelineTrack,
 	TimelineElement,
 	RetimeConfig,
+	VisualElement,
 } from "@/lib/timeline";
 import { calculateTotalDuration } from "@/lib/timeline";
+import { isTransitionableElement, withFadeTransition } from "@/lib/timeline";
 import { findTrackInSceneTracks } from "@/lib/timeline/track-element-update";
 import {
+	buildElementFromMedia,
 	canElementBeHidden,
 	canElementHaveAudio,
 } from "@/lib/timeline/element-utils";
@@ -62,6 +65,10 @@ import type {
 	PlannedElementMove,
 	PlannedTrackCreation,
 } from "@/lib/timeline/group-move";
+import { DEFAULT_NEW_ELEMENT_DURATION } from "@/lib/timeline/creation";
+import { TICKS_PER_SECOND } from "@/lib/wasm";
+
+const DEFAULT_FADE_TRANSITION_DURATION = Math.round(TICKS_PER_SECOND / 2);
 
 export class TimelineManager {
 	private listeners = new Set<() => void>();
@@ -84,6 +91,105 @@ export class TimelineManager {
 	insertElement({ element, placement }: InsertElementParams): void {
 		const command = new InsertElementCommand({ element, placement });
 		this.editor.command.execute({ command });
+	}
+
+	async freezeFrame(): Promise<{ success: boolean; error?: string }> {
+		const activeProject = this.editor.project.getActiveOrNull();
+		if (!activeProject) {
+			return { success: false, error: "No active project" };
+		}
+
+		const frame = await this.editor.renderer.createFrameImageFile();
+		if (!frame.success) {
+			return frame;
+		}
+
+		const mediaAsset = await this.editor.media.addMediaAsset({
+			projectId: activeProject.metadata.id,
+			asset: {
+				name: frame.file.name,
+				type: "image",
+				file: frame.file,
+				url: frame.url,
+				thumbnailUrl: frame.thumbnailUrl,
+				width: frame.width,
+				height: frame.height,
+			},
+		});
+		if (!mediaAsset) {
+			return { success: false, error: "Failed to save freeze frame" };
+		}
+
+		const element = buildElementFromMedia({
+			mediaId: mediaAsset.id,
+			mediaType: "image",
+			name: "Freeze frame",
+			duration: DEFAULT_NEW_ELEMENT_DURATION,
+			startTime: this.editor.playback.getCurrentTime(),
+		});
+		this.insertElement({
+			element,
+			placement: { mode: "auto", trackType: "video" },
+		});
+
+		return { success: true };
+	}
+
+	applyFadeTransition({
+		elements,
+		duration = DEFAULT_FADE_TRANSITION_DURATION,
+	}: {
+		elements: { trackId: string; elementId: string }[];
+		duration?: number;
+	}): void {
+		const entries = this.getElementsWithTracks({ elements })
+			.filter(({ element }) => isTransitionableElement(element))
+			.sort((left, right) => {
+				if (left.track.id !== right.track.id) {
+					return left.track.id.localeCompare(right.track.id);
+				}
+				return left.element.startTime - right.element.startTime;
+			}) as Array<{
+			track: TimelineTrack;
+			element: VisualElement;
+		}>;
+		if (entries.length === 0) {
+			return;
+		}
+
+		const updates =
+			entries.length === 2 && entries[0].track.id === entries[1].track.id
+				? [
+						{
+							trackId: entries[0].track.id,
+							elementId: entries[0].element.id,
+							patch: withFadeTransition({
+								element: entries[0].element,
+								direction: "out",
+								duration,
+							}),
+						},
+						{
+							trackId: entries[1].track.id,
+							elementId: entries[1].element.id,
+							patch: withFadeTransition({
+								element: entries[1].element,
+								direction: "in",
+								duration,
+							}),
+						},
+					]
+				: entries.map(({ track, element }) => ({
+						trackId: track.id,
+						elementId: element.id,
+						patch: withFadeTransition({
+							element,
+							direction: "both",
+							duration,
+						}),
+					}));
+
+		this.updateElements({ updates });
 	}
 
 	updateElementTrim({

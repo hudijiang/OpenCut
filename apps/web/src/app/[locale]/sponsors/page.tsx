@@ -4,13 +4,14 @@ import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { BasePage } from "@/app/base-page";
 import { Card, CardContent } from "@/components/ui/card";
+import type { Locale } from "@/i18n/routing";
 import { SPONSORS, type Sponsor } from "@/lib/site/sponsors";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { LinkSquare02Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/utils/ui";
 
 type Props = {
-	params: Promise<{ locale: string }>;
+	params: Promise<{ locale: Locale }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

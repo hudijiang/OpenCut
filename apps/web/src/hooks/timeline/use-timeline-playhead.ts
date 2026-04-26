@@ -68,24 +68,28 @@ export function useTimelinePlayhead({
 			const rulerRect = ruler.getBoundingClientRect();
 			const relativeMouseX = event.clientX - rulerRect.left;
 
-		const timelineContentWidth = timelineTimeToPixels({ time: duration, zoomLevel });
+			const timelineContentWidth = timelineTimeToPixels({
+				time: duration,
+				zoomLevel,
+			});
 
-		const clampedMouseX = Math.max(
-			0,
-			Math.min(timelineContentWidth, relativeMouseX),
-		);
+			const clampedMouseX = Math.max(
+				0,
+				Math.min(timelineContentWidth, relativeMouseX),
+			);
 
-		const rawTimeSeconds = Math.max(
-			0,
-			Math.min(
-				duration / TICKS_PER_SECOND,
-				clampedMouseX / (BASE_TIMELINE_PIXELS_PER_SECOND * zoomLevel),
-			),
-		);
-		const rawTime = Math.round(rawTimeSeconds * TICKS_PER_SECOND);
+			const rawTimeSeconds = Math.max(
+				0,
+				Math.min(
+					duration / TICKS_PER_SECOND,
+					clampedMouseX / (BASE_TIMELINE_PIXELS_PER_SECOND * zoomLevel),
+				),
+			);
+			const rawTime = Math.round(rawTimeSeconds * TICKS_PER_SECOND);
 
-		const rate = activeProject.settings.fps;
-		const frameTime = snappedSeekTime({ time: rawTime, duration, rate }) ?? rawTime;
+			const rate = activeProject.settings.fps;
+			const frameTime =
+				snappedSeekTime({ time: rawTime, duration, rate }) ?? rawTime;
 
 			const shouldSnap = snappingEnabled && !isShiftHeldRef.current;
 			const time = (() => {
@@ -119,7 +123,6 @@ export function useTimelinePlayhead({
 			activeProject.settings.fps,
 			isShiftHeldRef,
 			editor.scenes,
-			editor.timeline,
 		],
 	);
 
@@ -249,10 +252,10 @@ export function useTimelinePlayhead({
 			const tracksViewport = tracksScrollRef.current;
 			if (!rulerViewport || !tracksViewport) return;
 
-		const playheadPixels = timelineTimeToPixels({
-			time,
-			zoomLevel: zoomLevelRef.current,
-		});
+			const playheadPixels = timelineTimeToPixels({
+				time,
+				zoomLevel: zoomLevelRef.current,
+			});
 			const viewportWidth = rulerViewport.clientWidth;
 			const scrollMinimum = 0;
 			const scrollMaximum = rulerViewport.scrollWidth - viewportWidth;

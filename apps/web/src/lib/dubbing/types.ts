@@ -3,7 +3,13 @@ export interface DubbingConfig {
 	targetLanguage: string;
 	assemblyApiKey: string;
 	elevenLabsApiKey: string;
-	openAiApiKey: string;
+	deepSeekApiKey: string;
+	synthesisProvider: "elevenlabs" | "local-xtts";
+	localXttsEndpoint: string;
+	localXttsVoiceSource: "single-reference" | "auto-speakers";
+	localXttsSingleVoiceReferenceSource: "upload" | "library";
+	localXttsRequestFormat: "multipart" | "json";
+	localXttsSpeakerWav: string;
 }
 
 export interface SpeakerSegment {

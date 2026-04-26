@@ -132,16 +132,18 @@ function PreviewCanvas({
 			height: nativeHeight,
 			fps: activeProject.settings.fps,
 		});
-	}, [nativeWidth, nativeHeight, activeProject.settings.fps.numerator, activeProject.settings.fps.denominator]);
+	}, [nativeWidth, nativeHeight, activeProject.settings.fps]);
 
 	const render = useCallback(() => {
 		if (canvasRef.current && renderTree && !renderingRef.current) {
-		const renderTime = Math.min(
-			editor.playback.getCurrentTime(),
-			editor.timeline.getLastFrameTime(),
-		);
-		const ticksPerFrame = Math.round(TICKS_PER_SECOND * renderer.fps.denominator / renderer.fps.numerator);
-		const frame = Math.floor(renderTime / ticksPerFrame);
+			const renderTime = Math.min(
+				editor.playback.getCurrentTime(),
+				editor.timeline.getLastFrameTime(),
+			);
+			const ticksPerFrame = Math.round(
+				(TICKS_PER_SECOND * renderer.fps.denominator) / renderer.fps.numerator,
+			);
+			const frame = Math.floor(renderTime / ticksPerFrame);
 
 			if (
 				frame !== lastFrameRef.current ||
@@ -161,7 +163,7 @@ function PreviewCanvas({
 					});
 			}
 		}
-	}, [renderer, renderTree, editor.playback]);
+	}, [renderer, renderTree, editor.playback, editor.timeline]);
 
 	useRafLoop(render);
 

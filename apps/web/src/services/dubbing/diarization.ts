@@ -13,12 +13,25 @@ const transcriptionSubmitResponseSchema = z.object({
 	id: z.string().min(1),
 });
 
+const optionalStringSchema = z.preprocess(
+	(value) => (value === null ? undefined : value),
+	z.string().optional(),
+);
+const optionalNumberSchema = z.preprocess(
+	(value) => (value === null ? undefined : value),
+	z.number().optional(),
+);
+const optionalTranscriptWordsSchema = z.preprocess(
+	(value) => (value === null ? undefined : value),
+	z.array(z.lazy(() => transcriptWordSchema)).optional(),
+);
+
 const transcriptWordSchema = z.object({
 	text: z.string(),
 	start: z.number(),
 	end: z.number(),
 	confidence: z.number(),
-	speaker: z.string().optional(),
+	speaker: optionalStringSchema,
 });
 
 const diarizationUtteranceSchema = z.object({
@@ -26,19 +39,22 @@ const diarizationUtteranceSchema = z.object({
 	start: z.number(),
 	end: z.number(),
 	text: z.string(),
-	confidence: z.number().optional(),
-	words: z.array(transcriptWordSchema).optional(),
+	confidence: optionalNumberSchema,
+	words: optionalTranscriptWordsSchema,
 });
 
 const diarizationResponseSchema = z.object({
 	id: z.string(),
 	status: z.enum(["queued", "processing", "completed", "error"]),
-	text: z.string().optional(),
-	language_code: z.string().optional(),
-	language_confidence: z.number().optional(),
-	error: z.string().optional(),
-	words: z.array(transcriptWordSchema).optional(),
-	utterances: z.array(diarizationUtteranceSchema).optional(),
+	text: optionalStringSchema,
+	language_code: optionalStringSchema,
+	language_confidence: optionalNumberSchema,
+	error: optionalStringSchema,
+	words: optionalTranscriptWordsSchema,
+	utterances: z.preprocess(
+		(value) => (value === null ? undefined : value),
+		z.array(diarizationUtteranceSchema).optional(),
+	),
 });
 
 class DubbingServiceError extends Error {
@@ -116,6 +132,7 @@ export async function submitAudioForTranscription(
 					audio_url: uploadPayload.upload_url,
 					speaker_labels: true,
 					language_detection: true,
+					speech_models: ["universal-3-pro", "universal-2"],
 				}),
 			},
 		);

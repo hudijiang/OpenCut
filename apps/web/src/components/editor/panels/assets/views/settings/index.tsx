@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { PanelView } from "@/components/editor/panels/assets/views/base-panel";
 import {
 	Select,
@@ -21,8 +22,11 @@ import {
 import { BackgroundContent } from "./background";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { NumberField } from "@/components/ui/number-field";
 import { useEditorStore } from "@/stores/editor-store";
+import { useDubbingConfigStore } from "@/stores/dubbing-config-store";
 import { usePropertyDraft } from "@/components/editor/panels/properties/hooks/use-property-draft";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Tick02Icon } from "@hugeicons/core-free-icons";
@@ -32,7 +36,7 @@ import { formatNumberForDisplay } from "@/utils/math";
 import { OcSquarePlusIcon } from "@/components/icons";
 import type { TCanvasSize } from "@/lib/project/types";
 
-type SettingsView = "project-info" | "background";
+type SettingsView = "project-info" | "background" | "api-keys";
 
 const PRESET_LABELS: Record<string, string> = {
 	"1:1": "1:1",
@@ -96,9 +100,23 @@ function useCanvasDimensionDraft({
 }
 
 export function SettingsView() {
+	const tApiKeys = useTranslations("dubbing.apiKeys");
 	const [view, setView] = useState<SettingsView>("project-info");
 	const editor = useEditor();
 	const activeProject = useEditor((e) => e.project.getActive());
+	const assemblyApiKey = useDubbingConfigStore(
+		(state) => state.assemblyApiKey,
+	);
+	const elevenLabsApiKey = useDubbingConfigStore(
+		(state) => state.elevenLabsApiKey,
+	);
+	const deepSeekApiKey = useDubbingConfigStore(
+		(state) => state.deepSeekApiKey,
+	);
+	const localXttsEndpoint = useDubbingConfigStore(
+		(state) => state.localXttsEndpoint,
+	);
+	const setConfigValue = useDubbingConfigStore((state) => state.setConfigValue);
 	const { canvasPresets } = useEditorStore();
 	const currentCanvasSize = activeProject.settings.canvasSize;
 	const canvasSizeMode = activeProject.settings.canvasSizeMode ?? "preset";
@@ -206,7 +224,6 @@ export function SettingsView() {
 	});
 
 	const isCustomSelected = canvasSizeMode === "custom";
-
 	return (
 		<PanelView
 			contentClassName="px-0"
@@ -216,6 +233,7 @@ export function SettingsView() {
 					<TabsList>
 						<TabsTrigger value="project-info">Project info</TabsTrigger>
 						<TabsTrigger value="background">Background</TabsTrigger>
+						<TabsTrigger value="api-keys">{tApiKeys("shortTitle")}</TabsTrigger>
 					</TabsList>
 				</Tabs>
 			}
@@ -309,7 +327,86 @@ export function SettingsView() {
 				</div>
 			)}
 			{view === "background" && <BackgroundContent />}
+			{view === "api-keys" && (
+				<div className="flex flex-col">
+					<Section showTopBorder={false}>
+						<SectionHeader>
+							<SectionTitle className="flex-1">
+								{tApiKeys("title")}
+							</SectionTitle>
+						</SectionHeader>
+						<SectionContent className="space-y-4 px-2 pb-4">
+							<p className="text-muted-foreground text-sm">
+								{tApiKeys("description")}
+							</p>
+							<ApiKeyField
+								id="assembly-key"
+								label={tApiKeys("assembly")}
+								value={assemblyApiKey}
+								onChange={(value) =>
+									setConfigValue("assemblyApiKey", value)
+								}
+							/>
+							<ApiKeyField
+								id="deepseek-key"
+								label={tApiKeys("deepSeek")}
+								value={deepSeekApiKey}
+								onChange={(value) =>
+									setConfigValue("deepSeekApiKey", value)
+								}
+							/>
+							<ApiKeyField
+								id="elevenlabs-key"
+								label={tApiKeys("elevenLabs")}
+								value={elevenLabsApiKey}
+								onChange={(value) =>
+									setConfigValue("elevenLabsApiKey", value)
+								}
+							/>
+							<ApiKeyField
+								id="local-xtts-endpoint"
+								label={tApiKeys("localXttsEndpoint")}
+								type="url"
+								value={localXttsEndpoint}
+								onChange={(value) =>
+									setConfigValue("localXttsEndpoint", value)
+								}
+							/>
+						</SectionContent>
+					</Section>
+				</div>
+			)}
 		</PanelView>
+	);
+}
+
+function ApiKeyField({
+	id,
+	label,
+	value,
+	onChange,
+	type = "password",
+}: {
+	id: string;
+	label: string;
+	value: string;
+	onChange: (value: string) => void;
+	type?: "password" | "url" | "text";
+}) {
+	const tApiKeys = useTranslations("dubbing.apiKeys");
+
+	return (
+		<div className="grid gap-2">
+			<Label htmlFor={id}>{label}</Label>
+			<Input
+				id={id}
+				type={type}
+				value={value}
+				onChange={(event) => onChange(event.target.value)}
+				placeholder={tApiKeys("placeholder")}
+				autoComplete="off"
+			/>
+		</div>
 	);
 }
 

@@ -14,19 +14,33 @@ export function resolveEffectPasses({
 	width,
 	height,
 	localTime,
+	duration,
 }: {
 	definition: EffectDefinition;
 	effectParams: ParamValues;
 	width: number;
 	height: number;
 	localTime: number;
+	duration?: number;
 }): EffectPass[] {
 	if (definition.renderer.buildPasses) {
-		return definition.renderer.buildPasses({ effectParams, width, height, localTime });
+		return definition.renderer.buildPasses({
+			effectParams,
+			width,
+			height,
+			localTime,
+			duration: duration ?? 0,
+		});
 	}
 	return definition.renderer.passes.map((pass) => ({
 		shader: pass.shader,
-		uniforms: pass.uniforms({ effectParams, width, height, localTime }),
+		uniforms: pass.uniforms({
+			effectParams,
+			width,
+			height,
+			localTime,
+			duration: duration ?? 0,
+		}),
 	}));
 }
 

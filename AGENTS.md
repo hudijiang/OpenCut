@@ -1,5 +1,18 @@
 # Agents.md
 
+## Project Rules
+
+- 不要修改与当前任务无关的模块。
+- 修改前先说明计划影响哪些文件。
+- 每次任务只允许修改明确相关的目录。
+- 禁止全局重构、格式化整个项目、批量改名。
+- 如果需要改公共模块，必须先说明原因。
+- 修改完成后必须运行相关测试。
+- 输出最终结果时列出：
+  - 修改了哪些文件
+  - 为什么修改
+  - 如何验证没有影响其他模块
+
 ## Architecture
 
 An ongoing migration is moving all business logic into `rust/`. Each app under `apps/` is a UI shell — it owns rendering, interaction, and platform-specific concerns, but never owns logic. The UI framework for any given app is a replaceable detail.
@@ -20,4 +33,3 @@ Each app is a frontend that calls into Rust. Logic is never duplicated between a
 ### React
 
 - Read components before using them. They may already apply classes, which affects what you need to pass and how to override them.
-

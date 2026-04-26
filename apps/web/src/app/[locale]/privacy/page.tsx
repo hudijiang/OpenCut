@@ -7,11 +7,12 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "@/components/ui/accordion";
+import type { Locale } from "@/i18n/routing";
 import { Separator } from "@/components/ui/separator";
 import { SOCIAL_LINKS } from "@/lib/site/social";
 
 type Props = {
-	params: Promise<{ locale: string }>;
+	params: Promise<{ locale: Locale }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

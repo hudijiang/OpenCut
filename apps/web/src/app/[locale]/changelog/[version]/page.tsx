@@ -4,6 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { notFound } from "next/navigation";
 import { BasePage } from "@/app/base-page";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import type { Locale } from "@/i18n/routing";
 import { getReleaseByVersion, getSortedReleases } from "@/lib/changelog/utils";
 import {
 	ReleaseArticle,
@@ -14,7 +15,7 @@ import {
 } from "@/lib/changelog/components/release";
 import { CopyMarkdownButton } from "@/lib/changelog/components/copy-markdown-button";
 
-type Props = { params: Promise<{ locale: string; version: string }> };
+type Props = { params: Promise<{ locale: Locale; version: string }> };
 
 export async function generateStaticParams() {
 	return getSortedReleases().map((release) => ({ version: release.version }));

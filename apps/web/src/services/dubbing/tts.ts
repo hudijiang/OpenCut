@@ -68,6 +68,70 @@ function assertApiKey(apiKey: string): void {
 	}
 }
 
+function assertLocalEndpoint(endpoint: string): URL {
+	const trimmed = endpoint.trim();
+	if (trimmed.length === 0) {
+		throw new TtsServiceError("Local XTTS endpoint is required");
+	}
+
+	try {
+		const url = new URL(trimmed);
+		if (url.protocol !== "http:" && url.protocol !== "https:") {
+			throw new TtsServiceError("Local XTTS endpoint must use http or https");
+		}
+		return url;
+	} catch (error) {
+		if (error instanceof TtsServiceError) {
+			throw error;
+		}
+		throw new TtsServiceError("Local XTTS endpoint is invalid");
+	}
+}
+
+function isCoquiTtsServerEndpoint(url: URL): boolean {
+	return url.pathname.replace(/\/+$/, "").endsWith("/api/tts");
+}
+
+function containsCjkText(text: string): boolean {
+	return /[\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff]/u.test(text);
+}
+
+async function parseLocalXttsErrorResponse(response: Response): Promise<string> {
+	const fallback = `Local XTTS request failed with status ${response.status}`;
+	const responseClone = response.clone();
+	try {
+		const data: unknown = await response.json();
+		const schema = z.object({
+			detail: z
+				.union([z.string(), z.object({ message: z.string().optional() })])
+				.optional(),
+			error: z.string().optional(),
+			message: z.string().optional(),
+		});
+		const parsed = schema.safeParse(data);
+		if (!parsed.success) {
+			const text = await responseClone.text();
+			return text.trim() || fallback;
+		}
+
+		return (
+			(typeof parsed.data.detail === "string"
+				? parsed.data.detail
+				: parsed.data.detail?.message) ??
+			parsed.data.error ??
+			parsed.data.message ??
+			fallback
+		);
+	} catch {
+		try {
+			const text = await responseClone.text();
+			return text.trim() || fallback;
+		} catch {
+			return fallback;
+		}
+	}
+}
+
 function toSampleFile({
 	audioSample,
 	index,
@@ -182,6 +246,149 @@ export async function synthesizeSegment(
 			error instanceof Error ? error.message : "Speech synthesis failed",
 		);
 	}
+}
+
+export async function synthesizeLocalXttsSegment({
+	text,
+	language,
+	endpoint,
+	requestFormat,
+	speakerSample,
+	speakerWav,
+}: {
+	text: string;
+	language: string;
+	endpoint: string;
+	requestFormat: "multipart" | "json";
+	speakerSample?: Blob;
+	speakerWav: string;
+}): Promise<{ audioBuffer: ArrayBuffer; contentType: string }> {
+	const url = assertLocalEndpoint(endpoint);
+
+	if (text.trim().length === 0) {
+		throw new TtsServiceError("Text is required");
+	}
+
+	try {
+		const response = isCoquiTtsServerEndpoint(url)
+			? await fetch(buildCoquiTtsServerUrl({ url, text, language, speakerWav }), {
+					method: "GET",
+					headers: {
+						accept: "audio/wav",
+					},
+				})
+			: requestFormat === "multipart"
+				? await fetch(url, {
+						method: "POST",
+						body: buildLocalXttsFormData({
+							text,
+							language,
+							speakerSample,
+							speakerWav,
+						}),
+					})
+				: await fetch(url, {
+						method: "POST",
+						headers: {
+							"content-type": "application/json",
+						},
+						body: JSON.stringify({
+							text,
+							language,
+							speaker_wav: speakerWav,
+						}),
+					});
+
+		if (!response.ok) {
+			const errorMessage = await parseLocalXttsErrorResponse(response);
+			throw new TtsServiceError(
+				isCoquiTtsServerEndpoint(url)
+					? buildCoquiTtsServerErrorMessage({
+							errorMessage,
+							language,
+							text,
+						})
+					: errorMessage,
+			);
+		}
+
+		return {
+			audioBuffer: await response.arrayBuffer(),
+			contentType: response.headers.get("content-type") ?? "audio/wav",
+		};
+	} catch (error) {
+		if (error instanceof TtsServiceError) {
+			throw error;
+		}
+		throw new TtsServiceError(
+			error instanceof Error ? error.message : "Local XTTS synthesis failed",
+		);
+	}
+}
+
+function buildCoquiTtsServerErrorMessage({
+	errorMessage,
+	language,
+	text,
+}: {
+	errorMessage: string;
+	language: string;
+	text: string;
+}): string {
+	if (containsCjkText(text)) {
+		return `Coqui TTS server failed while synthesizing ${language} text. Your current server model appears unable to synthesize CJK text; start Coqui with an XTTS v2 multilingual model or choose a supported target language.`;
+	}
+
+	if (errorMessage.trim().startsWith("<!doctype html>")) {
+		return "Coqui TTS server returned 500. Check the Coqui server console for the Python traceback and confirm the model supports voice cloning, the selected language, and the reference audio file.";
+	}
+
+	return errorMessage;
+}
+
+function buildCoquiTtsServerUrl({
+	url,
+	text,
+	language,
+	speakerWav,
+}: {
+	url: URL;
+	text: string;
+	language: string;
+	speakerWav: string;
+}): URL {
+	const requestUrl = new URL(url);
+	requestUrl.searchParams.set("text", text);
+	requestUrl.searchParams.set("speaker_id", "");
+	requestUrl.searchParams.set("speaker_wav", speakerWav);
+	requestUrl.searchParams.set("style_wav", "");
+	requestUrl.searchParams.set("language_id", language);
+	return requestUrl;
+}
+
+function buildLocalXttsFormData({
+	text,
+	language,
+	speakerSample,
+	speakerWav,
+}: {
+	text: string;
+	language: string;
+	speakerSample: Blob | undefined;
+	speakerWav: string;
+}): FormData {
+	const formData = new FormData();
+	formData.append("text", text);
+	formData.append("language", language);
+
+	if (speakerSample) {
+		formData.append("speaker_wav", toSampleFile({ audioSample: speakerSample, index: 0 }));
+		formData.append("speaker_sample", toSampleFile({ audioSample: speakerSample, index: 0 }));
+	} else {
+		formData.append("speaker_wav", speakerWav);
+	}
+
+	return formData;
 }
 
 export async function deleteClonedVoice(

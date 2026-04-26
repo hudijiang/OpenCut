@@ -1,5 +1,8 @@
 import { Input, ALL_FORMATS, BlobSource } from "mediabunny";
-import { createTimelineAudioBuffer } from "@/lib/media/audio";
+import {
+	createTimelineAudioBuffer,
+	type AudioCollectionOptions,
+} from "@/lib/media/audio";
 import type { SceneTracks } from "@/lib/timeline";
 import type { MediaAsset } from "@/lib/media/types";
 import { TICKS_PER_SECOND } from "@/lib/wasm";
@@ -50,12 +53,14 @@ export const extractTimelineAudio = async ({
 	mediaAssets,
 	totalDuration,
 	onProgress,
+	excludeDubbingOutput,
+	includeTracksMutedByDubbing,
 }: {
 	tracks: SceneTracks;
 	mediaAssets: MediaAsset[];
 	totalDuration: number;
 	onProgress?: (progress: number) => void;
-}): Promise<Blob> => {
+} & AudioCollectionOptions): Promise<Blob> => {
 	if (totalDuration === 0) {
 		return createWavBlob({
 			samples: new Float32Array(
@@ -71,6 +76,8 @@ export const extractTimelineAudio = async ({
 		mediaAssets,
 		duration: totalDuration,
 		sampleRate: SAMPLE_RATE,
+		excludeDubbingOutput,
+		includeTracksMutedByDubbing,
 	});
 
 	if (!audioBuffer) {

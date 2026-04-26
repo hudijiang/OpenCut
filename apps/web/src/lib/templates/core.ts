@@ -80,6 +80,8 @@ type ResolvedSlotAssetMap = Map<
 >;
 
 let templatesWasmPromise: Promise<TemplatesWasmModule | null> | null = null;
+const localTemplatesWasmSpecifier =
+	"../../../../../rust/wasm/pkg/opencut_wasm.js";
 
 function serializeScene(scene: TScene) {
 	return {
@@ -104,7 +106,7 @@ async function loadTemplatesWasm() {
 
 	if (!templatesWasmPromise) {
 		templatesWasmPromise = import(
-			"../../../../../rust/wasm/pkg/opencut_wasm.js"
+			/* webpackIgnore: true */ localTemplatesWasmSpecifier
 		)
 			.then((module) =>
 				"instantiateProjectTemplateCore" in module &&

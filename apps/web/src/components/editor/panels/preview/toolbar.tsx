@@ -8,12 +8,10 @@ import { EditableTimecode } from "@/components/editable-timecode";
 import { Button } from "@/components/ui/button";
 import {
 	FullScreenIcon,
-	GridTableIcon,
 	PauseIcon,
 	PlayIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { getGuideById } from "@/lib/guides";
 import { Separator } from "@/components/ui/separator";
 import {
 	Select,
@@ -24,17 +22,12 @@ import {
 } from "@/components/ui/select";
 import { PREVIEW_ZOOM_PRESETS } from "@/lib/preview/zoom";
 import { usePreviewViewport } from "./preview-viewport";
-import { GridPopover } from "./guide-popover";
-import { usePreviewStore } from "@/stores/preview-store";
 
 export function PreviewToolbar({
 	onToggleFullscreen,
 }: {
 	onToggleFullscreen: () => void;
 }) {
-	const activeGuide = usePreviewStore((state) => state.activeGuide);
-	const activeGuideDefinition = getGuideById(activeGuide);
-
 	return (
 		<div className="grid grid-cols-[1fr_auto_1fr] items-center pb-3 pt-5 px-5">
 			<TimecodeDisplay />
@@ -94,7 +87,11 @@ function TimecodeDisplay() {
 			/>
 			<span className="text-muted-foreground px-2 font-mono text-xs">/</span>
 			<span className="text-muted-foreground font-mono text-xs">
-				{formatTimecode({ time: totalDuration, format: "HH:MM:SS:FF", rate: fps })}
+				{formatTimecode({
+					time: totalDuration,
+					format: "HH:MM:SS:FF",
+					rate: fps,
+				})}
 			</span>
 		</div>
 	);

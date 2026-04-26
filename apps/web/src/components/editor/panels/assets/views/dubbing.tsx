@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { z } from "zod";
@@ -43,12 +43,24 @@ import { TICKS_PER_SECOND } from "@/lib/wasm";
 import { extractSpeakerAudioSegments } from "@/services/dubbing/diarization";
 import {
 	audioBufferToMediaFile,
-	buildDubbingAudioBuffer,
+	buildAlignedDubbingSegmentFiles,
 } from "@/services/dubbing/mixer";
 import { deleteClonedVoice } from "@/services/dubbing/tts";
+import {
+	AddTrackCommand,
+	BatchCommand,
+	InsertElementCommand,
+	TracksSnapshotCommand,
+} from "@/lib/commands";
+import {
+	DUBBING_OUTPUT_ROLE,
+	prepareTracksForDubbingApply,
+} from "@/lib/dubbing/timeline";
+import {
+	DUBBING_CONFIG_STORAGE_KEY,
+	useDubbingConfigStore,
+} from "@/stores/dubbing-config-store";
 import { cn } from "@/utils/ui";
-
-const SESSION_STORAGE_KEY = "opencut-dubbing-config";
 
 const LANGUAGE_OPTIONS = [
 	{ code: "ar" },
@@ -97,14 +109,6 @@ const LANGUAGE_MESSAGE_KEYS = {
 	zh: "languages.zh",
 } as const;
 
-const INITIAL_CONFIG: DubbingConfig = {
-	sourceLanguage: "auto",
-	targetLanguage: "es",
-	assemblyApiKey: "",
-	elevenLabsApiKey: "",
-	openAiApiKey: "",
-};
-
 type ManagedStep = "analysis" | "translation" | "synthesis" | "apply";
 
 type StepStatus = {
@@ -128,34 +132,49 @@ const INITIAL_STEP_STATUSES: Record<ManagedStep, StepStatus> = {
 	apply: IDLE_STEP_STATUS,
 };
 
+const optionalStringSchema = z.preprocess(
+	(value) => (value === null ? undefined : value),
+	z.string().optional(),
+);
+const optionalNumberSchema = z.preprocess(
+	(value) => (value === null ? undefined : value),
+	z.number().optional(),
+);
+const optionalTranscriptWordsSchema = z.preprocess(
+	(value) => (value === null ? undefined : value),
+	z.array(z.lazy(() => transcriptWordSchema)).optional(),
+);
+
 const transcriptWordSchema = z.object({
 	text: z.string(),
 	start: z.number(),
 	end: z.number(),
 	confidence: z.number(),
-	speaker: z.string().optional(),
+	speaker: optionalStringSchema,
 });
 
 const speakerDiarizationSchema = z.object({
 	id: z.string(),
 	status: z.enum(["queued", "processing", "completed", "error"]),
-	text: z.string().optional(),
-	language_code: z.string().optional(),
-	language_confidence: z.number().optional(),
-	error: z.string().optional(),
-	words: z.array(transcriptWordSchema).optional(),
+	text: optionalStringSchema,
+	language_code: optionalStringSchema,
+	language_confidence: optionalNumberSchema,
+	error: optionalStringSchema,
+	words: optionalTranscriptWordsSchema,
 	utterances: z
-		.array(
-			z.object({
-				speaker: z.string(),
-				start: z.number(),
-				end: z.number(),
-				text: z.string(),
-				confidence: z.number().optional(),
-				words: z.array(transcriptWordSchema).optional(),
-			}),
-		)
-		.optional(),
+		.preprocess(
+			(value) => (value === null ? undefined : value),
+			z.array(
+				z.object({
+					speaker: z.string(),
+					start: z.number(),
+					end: z.number(),
+					text: z.string(),
+					confidence: optionalNumberSchema,
+					words: optionalTranscriptWordsSchema,
+				}),
+			).optional(),
+		),
 });
 
 const transcribeSubmitResponseSchema = z.object({
@@ -185,11 +204,20 @@ const cloneVoiceResponseSchema = z.object({
 });
 
 const PERSISTED_CONFIG_SCHEMA = z.object({
-	sourceLanguage: z.string(),
-	targetLanguage: z.string(),
-	assemblyApiKey: z.string(),
-	elevenLabsApiKey: z.string(),
-	openAiApiKey: z.string(),
+	sourceLanguage: z.string().optional(),
+	targetLanguage: z.string().optional(),
+	assemblyApiKey: z.string().optional(),
+	elevenLabsApiKey: z.string().optional(),
+	deepSeekApiKey: z.string().optional(),
+	openAiApiKey: z.string().optional(),
+	synthesisProvider: z.enum(["elevenlabs", "local-xtts"]).optional(),
+	localXttsEndpoint: z.string().optional(),
+	localXttsVoiceSource: z
+		.enum(["single-reference", "auto-speakers", "server-speaker-wav"])
+		.optional(),
+	localXttsSingleVoiceReferenceSource: z.enum(["upload", "library"]).optional(),
+	localXttsRequestFormat: z.enum(["multipart", "json"]).optional(),
+	localXttsSpeakerWav: z.string().optional(),
 });
 
 function formatTime(milliseconds: number): string {
@@ -197,6 +225,44 @@ function formatTime(milliseconds: number): string {
 	const minutes = Math.floor(totalSeconds / 60);
 	const seconds = totalSeconds % 60;
 	return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+function millisecondsToTicks(milliseconds: number): number {
+	return Math.max(0, Math.round((milliseconds / 1000) * TICKS_PER_SECOND));
+}
+
+function mapLocalXttsLanguageCode(languageCode: string): string {
+	if (languageCode === "zh") {
+		return "zh-cn";
+	}
+
+	return languageCode;
+}
+
+function resolveLocalXttsSpeakerWav({
+	template,
+	speakerId,
+}: {
+	template: string;
+	speakerId: string;
+}): string {
+	return (template.trim() || "{speakerId}.wav").replaceAll(
+		"{speakerId}",
+		speakerId,
+	);
+}
+
+function resolveLocalXttsRequestFormat({
+	voiceSource,
+	singleVoiceReferenceSource,
+}: {
+	voiceSource: DubbingConfig["localXttsVoiceSource"];
+	singleVoiceReferenceSource: DubbingConfig["localXttsSingleVoiceReferenceSource"];
+}): DubbingConfig["localXttsRequestFormat"] {
+	return voiceSource === "single-reference" &&
+		singleVoiceReferenceSource === "library"
+		? "json"
+		: "multipart";
 }
 
 function countWords(text: string): number {
@@ -338,32 +404,6 @@ function buildSpeakerProgress(
 	return progress;
 }
 
-function getKeysError({
-	config,
-	buildMessage,
-}: {
-	config: DubbingConfig;
-	buildMessage: (providers: string) => string;
-}): string | null {
-	const missing: string[] = [];
-
-	if (config.assemblyApiKey.trim().length === 0) {
-		missing.push("AssemblyAI");
-	}
-	if (config.openAiApiKey.trim().length === 0) {
-		missing.push("OpenAI");
-	}
-	if (config.elevenLabsApiKey.trim().length === 0) {
-		missing.push("ElevenLabs");
-	}
-
-	if (missing.length === 0) {
-		return null;
-	}
-
-	return buildMessage(missing.join(", "));
-}
-
 function getSegmentDeviation({
 	segment,
 	renderedDurationMs,
@@ -493,8 +533,50 @@ export function DubbingView() {
 	);
 	const activeProject = useEditor((instance) => instance.project.getActive());
 
-	const [config, setConfig] = useState<DubbingConfig>(INITIAL_CONFIG);
-	const [keysError, setKeysError] = useState<string | null>(null);
+	const sourceLanguage = useDubbingConfigStore((state) => state.sourceLanguage);
+	const targetLanguage = useDubbingConfigStore((state) => state.targetLanguage);
+	const assemblyApiKey = useDubbingConfigStore((state) => state.assemblyApiKey);
+	const elevenLabsApiKey = useDubbingConfigStore(
+		(state) => state.elevenLabsApiKey,
+	);
+	const deepSeekApiKey = useDubbingConfigStore(
+		(state) => state.deepSeekApiKey,
+	);
+	const synthesisProvider = useDubbingConfigStore(
+		(state) => state.synthesisProvider,
+	);
+	const localXttsEndpoint = useDubbingConfigStore(
+		(state) => state.localXttsEndpoint,
+	);
+	const localXttsVoiceSource = useDubbingConfigStore(
+		(state) => state.localXttsVoiceSource,
+	);
+	const localXttsSingleVoiceReferenceSource = useDubbingConfigStore(
+		(state) => state.localXttsSingleVoiceReferenceSource,
+	);
+	const localXttsRequestFormat = useDubbingConfigStore(
+		(state) => state.localXttsRequestFormat,
+	);
+	const localXttsSpeakerWav = useDubbingConfigStore(
+		(state) => state.localXttsSpeakerWav,
+	);
+	const config: DubbingConfig = {
+		sourceLanguage,
+		targetLanguage,
+		assemblyApiKey,
+		elevenLabsApiKey,
+		deepSeekApiKey,
+		synthesisProvider,
+		localXttsEndpoint,
+		localXttsVoiceSource,
+		localXttsSingleVoiceReferenceSource,
+		localXttsRequestFormat,
+		localXttsSpeakerWav,
+	};
+	const setConfigValue = useDubbingConfigStore((state) => state.setConfigValue);
+	const migrateLegacyConfig = useDubbingConfigStore(
+		(state) => state.migrateLegacyConfig,
+	);
 	const [stepStatuses, setStepStatuses] = useState<
 		Record<ManagedStep, StepStatus>
 	>(INITIAL_STEP_STATUSES);
@@ -507,11 +589,33 @@ export function DubbingView() {
 	>({});
 	const [sourceAudioBuffer, setSourceAudioBuffer] =
 		useState<AudioBuffer | null>(null);
+	const [singleReferenceVoiceFile, setSingleReferenceVoiceFile] =
+		useState<File | null>(null);
+	const [localVoiceFiles, setLocalVoiceFiles] = useState<string[]>([]);
+	const [isLoadingLocalVoiceFiles, setIsLoadingLocalVoiceFiles] =
+		useState(false);
+	const [localVoiceFilesError, setLocalVoiceFilesError] = useState<
+		string | null
+	>(null);
 	const [renderedDurations, setRenderedDurations] = useState<
 		Record<string, number>
 	>({});
 	const buildRequestFailedMessage = (status: number) =>
 		t("errors.requestFailed", { status });
+	const getTranslationErrorMessage = (error: unknown) => {
+		if (!(error instanceof Error)) {
+			return t("translation.messages.failed");
+		}
+
+		if (
+			/account is not active/i.test(error.message) ||
+			/check your billing details/i.test(error.message)
+		) {
+			return t("translation.messages.deepSeekAccountInactive");
+		}
+
+		return error.message;
+	};
 	const buildDefaultSpeakerLabel = (index: number) =>
 		t("transcript.defaultSpeakerLabel", { index });
 	const getLanguageLabel = (code: string) => {
@@ -524,8 +628,64 @@ export function DubbingView() {
 		return code.toUpperCase();
 	};
 
+	const loadLocalVoiceFiles = useCallback(async () => {
+		setIsLoadingLocalVoiceFiles(true);
+		setLocalVoiceFilesError(null);
+		try {
+			const response = await fetch("/api/dubbing/local-xtts-voices");
+			const payload = (await response.json()) as {
+				files?: string[];
+				error?: string;
+			};
+			if (!response.ok) {
+				throw new Error(payload.error ?? t("apiKeys.voiceLibraryLoadFailed"));
+			}
+
+			const files = payload.files ?? [];
+			setLocalVoiceFiles(files);
+			if (files.length === 0) {
+				if (localXttsSpeakerWav) {
+					setConfigValue("localXttsSpeakerWav", "");
+				}
+				return;
+			}
+			if (localXttsSpeakerWav && !files.includes(localXttsSpeakerWav)) {
+				setConfigValue("localXttsSpeakerWav", files[0] ?? "");
+			}
+			if (!localXttsSpeakerWav && files[0]) {
+				setConfigValue("localXttsSpeakerWav", files[0]);
+			}
+		} catch (error) {
+			setLocalVoiceFiles([]);
+			setLocalVoiceFilesError(
+				error instanceof Error
+					? error.message
+					: t("apiKeys.voiceLibraryLoadFailed"),
+			);
+		} finally {
+			setIsLoadingLocalVoiceFiles(false);
+		}
+	}, [localXttsSpeakerWav, setConfigValue, t]);
+
 	useEffect(() => {
-		const serialized = sessionStorage.getItem(SESSION_STORAGE_KEY);
+		if (
+			synthesisProvider !== "local-xtts" ||
+			localXttsVoiceSource !== "single-reference" ||
+			localXttsSingleVoiceReferenceSource !== "library"
+		) {
+			return;
+		}
+
+		void loadLocalVoiceFiles();
+	}, [
+		synthesisProvider,
+		localXttsVoiceSource,
+		localXttsSingleVoiceReferenceSource,
+		loadLocalVoiceFiles,
+	]);
+
+	useEffect(() => {
+		const serialized = sessionStorage.getItem(DUBBING_CONFIG_STORAGE_KEY);
 		if (!serialized) {
 			return;
 		}
@@ -534,24 +694,13 @@ export function DubbingView() {
 			const parsed: unknown = JSON.parse(serialized);
 			const result = PERSISTED_CONFIG_SCHEMA.safeParse(parsed);
 			if (result.success) {
-				setConfig(result.data);
+				migrateLegacyConfig(result.data);
+				sessionStorage.removeItem(DUBBING_CONFIG_STORAGE_KEY);
 			}
 		} catch {
-			sessionStorage.removeItem(SESSION_STORAGE_KEY);
+			sessionStorage.removeItem(DUBBING_CONFIG_STORAGE_KEY);
 		}
-	}, []);
-
-	useEffect(() => {
-		if (
-			keysError !== null &&
-			getKeysError({
-				config,
-				buildMessage: (providers) => t("errors.missingApiKeys", { providers }),
-			}) === null
-		) {
-			setKeysError(null);
-		}
-	}, [config, keysError, t]);
+	}, [migrateLegacyConfig]);
 
 	useEffect(() => {
 		const pendingSegments = segments.filter((segment) => {
@@ -658,14 +807,7 @@ export function DubbingView() {
 		key: Key,
 		value: DubbingConfig[Key],
 	): void {
-		setConfig((current) => {
-			const nextConfig = {
-				...current,
-				[key]: value,
-			};
-			sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(nextConfig));
-			return nextConfig;
-		});
+		setConfigValue(key, value);
 	}
 
 	function updateStepStatus(
@@ -736,13 +878,10 @@ export function DubbingView() {
 	}
 
 	async function handleAnalysis(): Promise<void> {
-		setKeysError(null);
-		const nextKeysError = getKeysError({
-			config,
-			buildMessage: (providers) => t("errors.missingApiKeys", { providers }),
-		});
-		if (nextKeysError) {
-			setKeysError(nextKeysError);
+		if (config.assemblyApiKey.trim().length === 0) {
+			updateStepStatus("analysis", {
+				error: t("analysis.messages.missingApiKey"),
+			});
 			return;
 		}
 
@@ -753,7 +892,14 @@ export function DubbingView() {
 			return;
 		}
 
-		if (!timelineHasAudio({ tracks: activeScene.tracks, mediaAssets })) {
+		if (
+			!timelineHasAudio({
+				tracks: activeScene.tracks,
+				mediaAssets,
+				excludeDubbingOutput: true,
+				includeTracksMutedByDubbing: true,
+			})
+		) {
 			updateStepStatus("analysis", {
 				error: t("analysis.messages.noAudio"),
 			});
@@ -775,6 +921,8 @@ export function DubbingView() {
 				tracks: activeScene.tracks,
 				mediaAssets,
 				totalDuration: editor.timeline.getTotalDuration(),
+				excludeDubbingOutput: true,
+				includeTracksMutedByDubbing: true,
 				onProgress: (progress) => {
 					updateStepStatus("analysis", {
 						progress: Math.max(8, Math.min(22, Math.round(progress / 5))),
@@ -894,8 +1042,10 @@ export function DubbingView() {
 			return;
 		}
 
-		if (config.openAiApiKey.trim().length === 0) {
-			setKeysError(t("translation.messages.missingApiKey"));
+		if (config.deepSeekApiKey.trim().length === 0) {
+			updateStepStatus("translation", {
+				error: t("translation.messages.missingApiKey"),
+			});
 			return;
 		}
 
@@ -924,7 +1074,7 @@ export function DubbingView() {
 						translatedText: segment.translatedText,
 					})),
 					targetLanguage: config.targetLanguage,
-					openaiApiKey: config.openAiApiKey,
+					deepSeekApiKey: config.deepSeekApiKey,
 				}),
 			});
 
@@ -984,10 +1134,7 @@ export function DubbingView() {
 				loading: false,
 				progress: 0,
 				message: "",
-				error:
-					error instanceof Error
-						? error.message
-						: t("translation.messages.failed"),
+				error: getTranslationErrorMessage(error),
 			});
 		}
 	}
@@ -1007,8 +1154,47 @@ export function DubbingView() {
 			return;
 		}
 
-		if (config.elevenLabsApiKey.trim().length === 0) {
-			setKeysError(t("synthesis.messages.missingApiKey"));
+		if (
+			config.synthesisProvider === "elevenlabs" &&
+			config.elevenLabsApiKey.trim().length === 0
+		) {
+			updateStepStatus("synthesis", {
+				error: t("synthesis.messages.missingApiKey"),
+			});
+			return;
+		}
+
+		if (
+			config.synthesisProvider === "local-xtts" &&
+			config.localXttsEndpoint.trim().length === 0
+		) {
+			updateStepStatus("synthesis", {
+				error: t("synthesis.messages.missingLocalXttsEndpoint"),
+			});
+			return;
+		}
+
+		if (
+			config.synthesisProvider === "local-xtts" &&
+			config.localXttsVoiceSource === "single-reference" &&
+			config.localXttsSingleVoiceReferenceSource === "upload" &&
+			singleReferenceVoiceFile === null
+		) {
+			updateStepStatus("synthesis", {
+				error: t("synthesis.messages.missingSingleReferenceVoice"),
+			});
+			return;
+		}
+
+		if (
+			config.synthesisProvider === "local-xtts" &&
+			config.localXttsVoiceSource === "single-reference" &&
+			config.localXttsSingleVoiceReferenceSource === "library" &&
+			config.localXttsSpeakerWav.trim().length === 0
+		) {
+			updateStepStatus("synthesis", {
+				error: t("synthesis.messages.missingLibraryReferenceVoice"),
+			});
 			return;
 		}
 
@@ -1038,6 +1224,124 @@ export function DubbingView() {
 				sourceAudioBuffer,
 				segments,
 			);
+
+			if (config.synthesisProvider === "local-xtts") {
+				const nextSegments: SpeakerSegment[] = [];
+				let completedSegments = 0;
+
+				for (const segment of segments) {
+					const audioBuffers = speakerAudio.get(segment.speakerId) ?? [];
+					const samples =
+						config.localXttsVoiceSource === "single-reference" &&
+						config.localXttsSingleVoiceReferenceSource === "upload" &&
+						singleReferenceVoiceFile
+							? [singleReferenceVoiceFile]
+							: config.localXttsVoiceSource === "auto-speakers"
+								? selectSpeakerSamples(audioBuffers)
+								: [];
+					const requestFormat = resolveLocalXttsRequestFormat({
+						voiceSource: config.localXttsVoiceSource,
+						singleVoiceReferenceSource:
+							config.localXttsSingleVoiceReferenceSource,
+					});
+
+					if (
+						requestFormat === "multipart" &&
+						samples.length === 0
+					) {
+						throw new Error(
+							t("errors.noUsableVoiceSamples", {
+								speakerId: segment.speakerId,
+							}),
+						);
+					}
+
+					const formData = new FormData();
+					formData.append("text", segment.translatedText);
+					formData.append(
+						"language",
+						mapLocalXttsLanguageCode(config.targetLanguage),
+					);
+					formData.append("endpoint", config.localXttsEndpoint);
+					formData.append("requestFormat", requestFormat);
+					formData.append(
+						"speakerWav",
+						config.localXttsVoiceSource === "single-reference" &&
+							config.localXttsSingleVoiceReferenceSource === "library"
+							? config.localXttsSpeakerWav
+							: resolveLocalXttsSpeakerWav({
+									template: config.localXttsSpeakerWav,
+									speakerId: segment.speakerId,
+								}),
+					);
+
+					const [sample] = samples;
+					if (sample) {
+						const sampleFilename =
+							config.localXttsVoiceSource === "single-reference" &&
+							config.localXttsSingleVoiceReferenceSource === "upload" &&
+							singleReferenceVoiceFile
+								? singleReferenceVoiceFile.name
+								: `${segment.speakerId}.wav`;
+						formData.append(
+							"speakerSample",
+							sample,
+							sampleFilename,
+						);
+					}
+
+					const synthesizeResponse = await fetch(
+						"/api/dubbing/local-xtts-synthesize",
+						{
+							method: "POST",
+							body: formData,
+						},
+					);
+
+					if (!synthesizeResponse.ok) {
+						throw new Error(
+							await readErrorMessage({
+								response: synthesizeResponse,
+								buildFallbackMessage: buildRequestFailedMessage,
+							}),
+						);
+					}
+
+					const audioBlob = await synthesizeResponse.blob();
+					nextSegments.push({
+						...segment,
+						audioBlob,
+						voiceId: `local-xtts:${segment.speakerId}`,
+					});
+
+					completedSegments += 1;
+					const speakerCompleted =
+						(completedPerSpeaker.get(segment.speakerId) ?? 0) + 1;
+					completedPerSpeaker.set(segment.speakerId, speakerCompleted);
+					const speakerTotal = totalPerSpeaker.get(segment.speakerId) ?? 1;
+					nextSpeakerProgress[segment.speakerId] = Math.round(
+						(speakerCompleted / speakerTotal) * 100,
+					);
+
+					setSpeakerProgress({ ...nextSpeakerProgress });
+					updateStepStatus("synthesis", {
+						progress: Math.round((completedSegments / segments.length) * 100),
+						message: t("synthesis.messages.segmentProgress", {
+							current: completedSegments,
+							total: segments.length,
+						}),
+					});
+				}
+
+				setSegments(nextSegments);
+				updateStepStatus("synthesis", {
+					loading: false,
+					progress: 100,
+					message: t("synthesis.messages.complete"),
+					error: null,
+				});
+				return;
+			}
 
 			for (const speakerId of uniqueSpeakerIds) {
 				const audioBuffers = speakerAudio.get(speakerId) ?? [];
@@ -1192,15 +1496,11 @@ export function DubbingView() {
 		});
 
 		try {
-			const totalDurationSeconds =
-				editor.timeline.getTotalDuration() / TICKS_PER_SECOND;
-			const sampleRate = sourceAudioBuffer?.sampleRate ?? 44100;
-			const dubbedBuffer = await buildDubbingAudioBuffer(
-				segments,
-				totalDurationSeconds,
-				sampleRate,
-			);
-			const dubbedFile = audioBufferToMediaFile(dubbedBuffer);
+			const segmentFiles = await buildAlignedDubbingSegmentFiles(segments);
+
+			if (segmentFiles.length === 0) {
+				throw new Error(t("apply.messages.missingAudio"));
+			}
 
 			updateStepStatus("apply", {
 				progress: 40,
@@ -1208,67 +1508,90 @@ export function DubbingView() {
 			});
 
 			const processedAssets = await processMediaAssets({
-				files: [dubbedFile],
+				files: segmentFiles.map(({ file }) => file),
 			});
-			const processedAsset = processedAssets[0];
 
-			if (!processedAsset) {
+			if (processedAssets.length !== segmentFiles.length) {
 				throw new Error(t("apply.messages.processAssetFailed"));
 			}
 
-			const savedAsset = await editor.media.addMediaAsset({
-				projectId: activeProject.metadata.id,
-				asset: processedAsset,
-			});
+			const savedSegments = await Promise.all(
+				processedAssets.map(async (processedAsset, index) => {
+					const savedAsset = await editor.media.addMediaAsset({
+						projectId: activeProject.metadata.id,
+						asset: processedAsset,
+					});
 
-			if (!savedAsset) {
-				throw new Error(t("apply.messages.saveAssetFailed"));
-			}
+					if (!savedAsset) {
+						throw new Error(t("apply.messages.saveAssetFailed"));
+					}
+
+					const segmentFile = segmentFiles[index];
+					return {
+						segment: segmentFile.segment,
+						actualDurationSec: segmentFile.actualDurationSec,
+						asset: savedAsset,
+					};
+				}),
+			);
 
 			updateStepStatus("apply", {
 				progress: 72,
 				message: t("apply.messages.mutingOriginal"),
 			});
 
-			const currentTracks = [
-				...activeScene.tracks.overlay,
-				activeScene.tracks.main,
-				...activeScene.tracks.audio,
-			];
-
-			for (const track of currentTracks) {
-				if (canTrackHaveAudio(track) && track.muted !== true) {
-					editor.timeline.toggleTrackMute({ trackId: track.id });
-				}
-			}
+			const tracksBeforeDubbing = editor.scenes.getActiveScene().tracks;
+			const tracksAfterDubbingMute = prepareTracksForDubbingApply({
+				tracks: tracksBeforeDubbing,
+			});
 
 			updateStepStatus("apply", {
 				progress: 88,
 				message: t("apply.messages.addingTrack"),
 			});
 
-			// TODO: replace this fallback with services/dubbing/mixer.applyDubbingToTimeline
-			// when that helper is exported from the shared service module.
-			const trackId = editor.timeline.addTrack({ type: "audio" });
-			const durationTicks =
-				savedAsset.duration === undefined
-					? editor.timeline.getTotalDuration()
-					: Math.round(savedAsset.duration * TICKS_PER_SECOND);
-
-			const element = buildElementFromMedia({
-				mediaId: savedAsset.id,
-				mediaType: "audio",
-				name: `${savedAsset.name} (${t("apply.dubbedSuffix")})`,
-				duration: durationTicks,
-				startTime: 0,
-			});
-
-			editor.timeline.insertElement({
-				element,
-				placement: {
-					mode: "explicit",
-					trackId,
+			const addTrackCommand = new AddTrackCommand("audio");
+			const dubbedTrackId = addTrackCommand.getTrackId();
+			const insertElementCommands = savedSegments.map(
+				({ segment, asset, actualDurationSec }) => {
+					const startTime = millisecondsToTicks(segment.startTime);
+					const segmentDurationSec = Math.max(
+						0.001,
+						(segment.endTime - segment.startTime) / 1000,
+					);
+					const duration = Math.max(
+						1,
+						millisecondsToTicks(
+							Math.max(segmentDurationSec, actualDurationSec) * 1000,
+						),
+					);
+					return new InsertElementCommand({
+						element: {
+							...buildElementFromMedia({
+								mediaId: asset.id,
+								mediaType: "audio",
+								name: `${speakerLabels[segment.speakerId] ?? segment.speakerId} (${t("apply.dubbedSuffix")})`,
+								duration,
+								startTime,
+							}),
+							role: DUBBING_OUTPUT_ROLE,
+						},
+						placement: {
+							mode: "explicit",
+							trackId: dubbedTrackId,
+						},
+					});
 				},
+			);
+			editor.command.execute({
+				command: new BatchCommand([
+					new TracksSnapshotCommand(
+						tracksBeforeDubbing,
+						tracksAfterDubbingMute,
+					),
+					addTrackCommand,
+					...insertElementCommands,
+				]),
 			});
 
 			updateStepStatus("apply", {
@@ -1329,46 +1652,6 @@ export function DubbingView() {
 
 				<WizardCard
 					stepNumber={1}
-					title={t("apiKeys.title")}
-					description={t("apiKeys.description")}
-					ready={
-						getKeysError({
-							config,
-							buildMessage: (providers) =>
-								t("errors.missingApiKeys", { providers }),
-						}) === null
-					}
-				>
-					<div className="grid gap-3">
-						<KeyField
-							id="assembly-key"
-							label={t("apiKeys.assembly")}
-							value={config.assemblyApiKey}
-							onChange={(value) => updateConfig("assemblyApiKey", value)}
-						/>
-						<KeyField
-							id="elevenlabs-key"
-							label={t("apiKeys.elevenLabs")}
-							value={config.elevenLabsApiKey}
-							onChange={(value) => updateConfig("elevenLabsApiKey", value)}
-						/>
-						<KeyField
-							id="openai-key"
-							label={t("apiKeys.openAi")}
-							value={config.openAiApiKey}
-							onChange={(value) => updateConfig("openAiApiKey", value)}
-						/>
-					</div>
-					{keysError ? (
-						<StepAlert
-							title={t("apiKeys.configurationNeeded")}
-							message={keysError}
-						/>
-					) : null}
-				</WizardCard>
-
-				<WizardCard
-					stepNumber={2}
 					title={t("analysis.title")}
 					description={t("analysis.description")}
 					loading={stepStatuses.analysis.loading}
@@ -1442,7 +1725,7 @@ export function DubbingView() {
 				</WizardCard>
 
 				<WizardCard
-					stepNumber={3}
+					stepNumber={2}
 					title={t("transcript.title")}
 					description={t("transcript.description")}
 					loading={stepStatuses.translation.loading}
@@ -1542,7 +1825,7 @@ export function DubbingView() {
 				</WizardCard>
 
 				<WizardCard
-					stepNumber={4}
+					stepNumber={3}
 					title={t("synthesis.title")}
 					description={t("synthesis.description")}
 					loading={stepStatuses.synthesis.loading}
@@ -1551,6 +1834,41 @@ export function DubbingView() {
 					<div className="space-y-4">
 						{allSegmentsTranslated ? (
 							<>
+								<DubbingSynthesisSettings
+									synthesisProvider={config.synthesisProvider}
+									onSynthesisProviderChange={(value) =>
+										setConfigValue("synthesisProvider", value)
+									}
+								/>
+								{config.synthesisProvider === "local-xtts" ? (
+									<LocalXttsVoiceSourcePanel
+										voiceSource={config.localXttsVoiceSource}
+										onVoiceSourceChange={(value) =>
+											setConfigValue("localXttsVoiceSource", value)
+										}
+										singleVoiceReferenceSource={
+											config.localXttsSingleVoiceReferenceSource
+										}
+										onSingleVoiceReferenceSourceChange={(value) =>
+											setConfigValue(
+												"localXttsSingleVoiceReferenceSource",
+												value,
+											)
+										}
+										libraryReferenceVoice={config.localXttsSpeakerWav}
+										onLibraryReferenceVoiceChange={(value) =>
+											setConfigValue("localXttsSpeakerWav", value)
+										}
+										singleReferenceVoiceFile={singleReferenceVoiceFile}
+										onSingleReferenceVoiceFileChange={
+											setSingleReferenceVoiceFile
+										}
+										localVoiceFiles={localVoiceFiles}
+										isLoadingLocalVoiceFiles={isLoadingLocalVoiceFiles}
+										localVoiceFilesError={localVoiceFilesError}
+										onRefreshLocalVoiceFiles={loadLocalVoiceFiles}
+									/>
+								) : null}
 								<div className="grid gap-3 md:grid-cols-2">
 									{uniqueSpeakerIds.map((speakerId) => (
 										<Card key={speakerId} className="rounded-xl">
@@ -1704,7 +2022,7 @@ export function DubbingView() {
 				</WizardCard>
 
 				<WizardCard
-					stepNumber={5}
+					stepNumber={4}
 					title={t("apply.title")}
 					description={t("apply.description")}
 					loading={stepStatuses.apply.loading}
@@ -1805,30 +2123,215 @@ function WizardCard({
 	);
 }
 
-function KeyField({
-	id,
-	label,
-	value,
-	onChange,
+function DubbingSynthesisSettings({
+	synthesisProvider,
+	onSynthesisProviderChange,
 }: {
-	id: string;
-	label: string;
-	value: string;
-	onChange: (value: string) => void;
+	synthesisProvider: DubbingConfig["synthesisProvider"];
+	onSynthesisProviderChange: (
+		value: DubbingConfig["synthesisProvider"],
+	) => void;
 }) {
-	const t = useTranslations("dubbing.apiKeys");
+	const t = useTranslations("dubbing");
 
 	return (
-		<div className="grid gap-2">
-			<Label htmlFor={id}>{label}</Label>
-			<Input
-				id={id}
-				type="password"
-				value={value}
-				onChange={(event) => onChange(event.target.value)}
-				placeholder={t("placeholder")}
-				autoComplete="off"
-			/>
+		<div className="rounded-md border bg-muted/30 p-3">
+			<div className="grid gap-2">
+				<Label htmlFor="dubbing-synthesis-provider">
+					{t("synthesis.synthesisProvider")}
+				</Label>
+				<Select
+					value={synthesisProvider}
+					onValueChange={(value) =>
+						onSynthesisProviderChange(
+							value as DubbingConfig["synthesisProvider"],
+						)
+					}
+				>
+					<SelectTrigger id="dubbing-synthesis-provider">
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="elevenlabs">
+							{t("apiKeys.providers.elevenLabs")}
+						</SelectItem>
+						<SelectItem value="local-xtts">
+							{t("apiKeys.providers.localXtts")}
+						</SelectItem>
+					</SelectContent>
+				</Select>
+				{synthesisProvider === "local-xtts" ? (
+					<p className="text-muted-foreground text-xs">
+						{t("synthesis.localXttsEndpointHint")}
+					</p>
+				) : null}
+			</div>
+		</div>
+	);
+}
+
+function LocalXttsVoiceSourcePanel({
+	voiceSource,
+	onVoiceSourceChange,
+	singleVoiceReferenceSource,
+	onSingleVoiceReferenceSourceChange,
+	libraryReferenceVoice,
+	onLibraryReferenceVoiceChange,
+	singleReferenceVoiceFile,
+	onSingleReferenceVoiceFileChange,
+	localVoiceFiles,
+	isLoadingLocalVoiceFiles,
+	localVoiceFilesError,
+	onRefreshLocalVoiceFiles,
+}: {
+	voiceSource: DubbingConfig["localXttsVoiceSource"];
+	onVoiceSourceChange: (value: DubbingConfig["localXttsVoiceSource"]) => void;
+	singleVoiceReferenceSource: DubbingConfig["localXttsSingleVoiceReferenceSource"];
+	onSingleVoiceReferenceSourceChange: (
+		value: DubbingConfig["localXttsSingleVoiceReferenceSource"],
+	) => void;
+	libraryReferenceVoice: string;
+	onLibraryReferenceVoiceChange: (value: string) => void;
+	singleReferenceVoiceFile: File | null;
+	onSingleReferenceVoiceFileChange: (file: File | null) => void;
+	localVoiceFiles: string[];
+	isLoadingLocalVoiceFiles: boolean;
+	localVoiceFilesError: string | null;
+	onRefreshLocalVoiceFiles: () => void;
+}) {
+	const t = useTranslations("dubbing");
+
+	return (
+		<div className="rounded-md border bg-muted/30 p-3">
+			<div className="grid gap-3">
+				<div className="grid gap-2">
+					<Label htmlFor="local-xtts-voice-source">
+						{t("synthesis.localXttsVoiceSource")}
+					</Label>
+					<Select
+						value={voiceSource}
+						onValueChange={(value) =>
+							onVoiceSourceChange(
+								value as DubbingConfig["localXttsVoiceSource"],
+							)
+						}
+					>
+						<SelectTrigger id="local-xtts-voice-source">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="single-reference">
+								{t("synthesis.voiceSources.single-reference")}
+							</SelectItem>
+							<SelectItem value="auto-speakers">
+								{t("synthesis.voiceSources.auto-speakers")}
+							</SelectItem>
+						</SelectContent>
+					</Select>
+					<p className="text-muted-foreground text-xs">
+						{t(`synthesis.voiceSourceDescriptions.${voiceSource}`)}
+					</p>
+				</div>
+			</div>
+			{voiceSource === "single-reference" ? (
+				<div className="mt-3 grid gap-3">
+					<div className="grid gap-2">
+						<Label htmlFor="local-xtts-single-reference-source">
+							{t("synthesis.localXttsSingleVoiceReferenceSource")}
+						</Label>
+						<Select
+							value={singleVoiceReferenceSource}
+							onValueChange={(value) =>
+								onSingleVoiceReferenceSourceChange(
+									value as DubbingConfig["localXttsSingleVoiceReferenceSource"],
+								)
+							}
+						>
+							<SelectTrigger id="local-xtts-single-reference-source">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="upload">
+									{t("synthesis.singleVoiceReferenceSources.upload")}
+								</SelectItem>
+								<SelectItem value="library">
+									{t("synthesis.singleVoiceReferenceSources.library")}
+								</SelectItem>
+							</SelectContent>
+						</Select>
+					</div>
+					{singleVoiceReferenceSource === "upload" ? (
+						<div className="grid gap-2">
+							<Label htmlFor="local-xtts-reference-voice">
+								{t("synthesis.singleReferenceVoice")}
+							</Label>
+							<Input
+								id="local-xtts-reference-voice"
+								type="file"
+								accept="audio/*"
+								onChange={(event) =>
+									onSingleReferenceVoiceFileChange(
+										event.target.files?.[0] ?? null,
+									)
+								}
+							/>
+							{singleReferenceVoiceFile ? (
+								<p className="text-muted-foreground text-xs">
+									{t("synthesis.selectedReferenceVoice", {
+										name: singleReferenceVoiceFile.name,
+									})}
+								</p>
+							) : null}
+						</div>
+					) : (
+						<div className="grid gap-2">
+							<div className="flex items-center justify-between gap-2">
+								<Label htmlFor="local-xtts-speaker-wav">
+									{t("synthesis.localXttsSpeakerWav")}
+								</Label>
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									onClick={() => onRefreshLocalVoiceFiles()}
+									disabled={isLoadingLocalVoiceFiles}
+								>
+									{isLoadingLocalVoiceFiles
+										? t("apiKeys.loadingVoiceLibrary")
+										: t("apiKeys.refreshVoiceLibrary")}
+								</Button>
+							</div>
+							<Select
+								value={libraryReferenceVoice}
+								onValueChange={onLibraryReferenceVoiceChange}
+								disabled={localVoiceFiles.length === 0}
+							>
+								<SelectTrigger id="local-xtts-speaker-wav">
+									<SelectValue
+										placeholder={t("apiKeys.selectReferenceVoice")}
+									/>
+								</SelectTrigger>
+								<SelectContent>
+									{localVoiceFiles.map((fileName) => (
+										<SelectItem key={fileName} value={fileName}>
+											{fileName}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+							{localVoiceFilesError ? (
+								<p className="text-destructive text-xs">
+									{localVoiceFilesError}
+								</p>
+							) : (
+								<p className="text-muted-foreground text-xs">
+									{t("apiKeys.voiceLibraryHint")}
+								</p>
+							)}
+						</div>
+					)}
+				</div>
+			) : null}
 		</div>
 	);
 }

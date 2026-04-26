@@ -90,12 +90,27 @@
 			"qualityVeryHigh": "Very high - Largest file size",
 			"audio": "Audio",
 			"includeAudio": "Include audio in export",
+			"resolution": "Resolution",
+			"resolutionSource": "Source",
+			"bitrate": "Bitrate",
+			"bitrateAuto": "Auto",
+			"estimatedSize": "Estimated size: {size}",
+			"cancel": "Cancel",
+			"preflightTitle": "Preflight",
+			"preflightPassed": "No issues that would block export.",
+			"preflightEmptyTimeline": "The timeline is empty and cannot be exported.",
+			"preflightMissingMedia": "Missing media: {names}",
+			"preflightNoAudio": "Audio is enabled, but the current scene has no exportable audio clips.",
+			"preflightTransparentBackground": "The background is transparent, which may appear black in some players.",
 			"unknownError": "Unknown error occurred"
 		}
 	},
 	"captions": {
 		"title": "Captions",
 		"import": "Import",
+		"export": "Export captions",
+		"exportSrt": "Export SRT",
+		"exportVtt": "Export VTT",
 		"language": "Language",
 		"captionPacing": "Caption pacing",
 		"stylePreset": "Style preset",
@@ -109,6 +124,7 @@
 		"readingSubtitleFile": "Reading subtitle file...",
 		"importingSubtitles": "Importing subtitles...",
 		"noCaptionsGenerated": "No captions were generated",
+		"noCaptionsToExport": "The current scene has no captions to export",
 		"unexpectedError": "An unexpected error occurred",
 		"noValidSubtitleCues": "No valid subtitle cues were found in the subtitle file",
 		"importedWithSkipped": "Imported {importedCount} subtitle cue(s) and skipped {skippedCount} malformed cue(s).",
@@ -193,10 +209,37 @@
 		},
 		"apiKeys": {
 			"title": "API Keys",
-			"description": "Keys are stored in sessionStorage for this browser tab only.",
+			"shortTitle": "API Keys",
+			"description": "Keys are stored in this browser's local storage and are used only when running the corresponding dubbing step.",
 			"assembly": "AssemblyAI API key",
 			"elevenLabs": "ElevenLabs API key",
-			"openAi": "OpenAI API key",
+			"deepSeek": "DeepSeek API key",
+			"synthesisProvider": "Dubbing synthesis service",
+			"localXttsEndpoint": "Local XTTS synthesis endpoint",
+			"localXttsVoiceSource": "Local XTTS voice source",
+			"localXttsSingleVoiceReferenceSource": "Single reference voice method",
+			"localXttsSpeakerWav": "Reference audio",
+			"providers": {
+				"elevenLabs": "ElevenLabs voice cloning",
+				"localXtts": "Local XTTS service"
+			},
+			"voiceSources": {
+				"singleReference": "Single reference voice",
+				"autoSpeakers": "Automatic multi-speaker voices"
+			},
+			"voiceSourceDescriptions": {
+				"single-reference": "Use one reference voice for every segment, either uploaded during synthesis or selected from a local voice library.",
+				"auto-speakers": "During synthesis, extract a reference voice sample for each speaker from the transcribed source audio."
+			},
+			"singleVoiceReferenceSources": {
+				"upload": "Upload reference audio during synthesis",
+				"library": "Choose from local voice library"
+			},
+			"refreshVoiceLibrary": "Refresh",
+			"loadingVoiceLibrary": "Loading",
+			"selectReferenceVoice": "Select reference audio",
+			"voiceLibraryHint": "Put audio files in the project xtts-voices folder, then refresh to select them.",
+			"voiceLibraryLoadFailed": "Failed to load local voice library",
 			"placeholder": "API key",
 			"configurationNeeded": "Configuration Needed"
 		},
@@ -211,6 +254,7 @@
 			"failed": "Analysis Failed",
 			"complete": "Analysis complete. Review and edit the transcript.",
 			"messages": {
+				"missingApiKey": "AssemblyAI API key is required for analysis. Configure it in Settings > API Keys first.",
 				"noActiveScene": "No active scene is available.",
 				"noAudio": "The current timeline does not have audible media.",
 				"extracting": "Extracting timeline audio...",
@@ -234,10 +278,11 @@
 		"translation": {
 			"messages": {
 				"missingAnalysis": "Run analysis before translating.",
-				"missingApiKey": "OpenAI API key is required for translation.",
+				"missingApiKey": "DeepSeek API key is required for translation. Configure it in Settings > API Keys first.",
 				"translating": "Translating transcript segments...",
 				"applying": "Applying translated text...",
 				"complete": "Translation complete. Review the bilingual comparison.",
+				"deepSeekAccountInactive": "The DeepSeek account is not active or billing is unavailable. Check balance/payment details on the DeepSeek platform, or retry with an active DeepSeek API key.",
 				"failed": "Translation request failed."
 			}
 		},
@@ -254,11 +299,34 @@
 			"translatedText": "Translated text",
 			"speakerProgress": "{count}% ready",
 			"slotDuration": "Slot: {duration}",
+			"synthesisProvider": "Dubbing synthesis service",
+			"localXttsEndpointHint": "Configure the local XTTS endpoint in Settings > API Keys.",
+			"localXttsVoiceSource": "Local XTTS voice source",
+			"localXttsSingleVoiceReferenceSource": "Single reference voice method",
+			"localXttsSpeakerWav": "Reference audio",
+			"singleReferenceVoice": "Reference audio",
+			"selectedReferenceVoice": "Selected: {name}",
+			"voiceSources": {
+				"single-reference": "Single reference voice",
+				"auto-speakers": "Automatic multi-speaker voices"
+			},
+			"voiceSourceDescriptions": {
+				"single-reference": "Every translated segment will be synthesized with the same reference voice.",
+				"auto-speakers": "Uses the source audio from analysis to automatically sample each speaker's voice."
+			},
+			"singleVoiceReferenceSources": {
+				"upload": "Upload reference audio",
+				"library": "Choose from project voice library"
+			},
+			"noLibraryReferenceVoice": "Choose a reference audio file from the project voice library in the dubbing settings first.",
 			"messages": {
 				"missingSourceAudio": "Source audio is not ready. Run analysis again.",
 				"missingTranslations": "Translate every segment before synthesizing.",
-				"missingApiKey": "ElevenLabs API key is required for synthesis.",
-				"working": "Cloning voices and synthesizing segments...",
+				"missingApiKey": "ElevenLabs API key is required for synthesis. Configure it in Settings > API Keys first.",
+				"missingLocalXttsEndpoint": "Configure the local XTTS synthesis endpoint in Settings > API Keys first.",
+				"missingSingleReferenceVoice": "Upload a reference audio file first, or switch to automatic multi-speaker voices in the dubbing settings.",
+				"missingLibraryReferenceVoice": "Choose a reference audio file from the project voice library in the dubbing settings first.",
+				"working": "Synthesizing dubbed segments...",
 				"segmentProgress": "Synthesizing segment {current} of {total}...",
 				"complete": "Dubbed audio is ready to apply to the timeline.",
 				"failed": "Voice cloning or synthesis failed.",

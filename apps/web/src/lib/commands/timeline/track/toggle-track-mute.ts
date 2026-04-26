@@ -25,8 +25,17 @@ export class ToggleTrackMuteCommand extends Command {
 		const updatedTracks = updateTrackInSceneTracks({
 			tracks: this.savedState,
 			trackId: this.trackId,
-			update: (track) =>
-				canTrackHaveAudio(track) ? { ...track, muted: !track.muted } : track,
+			update: (track) => {
+				if (!canTrackHaveAudio(track)) {
+					return track;
+				}
+
+				return {
+					...track,
+					muted: !track.muted,
+					mutedByDubbing: undefined,
+				};
+			},
 		});
 
 		editor.timeline.updateTracks(updatedTracks);

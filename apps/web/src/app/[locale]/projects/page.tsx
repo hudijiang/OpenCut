@@ -67,7 +67,7 @@ import { ProjectInfoDialog } from "@/components/editor/dialogs/project-info-dial
 import { RenameProjectDialog } from "@/components/editor/dialogs/rename-project-dialog";
 import { cn } from "@/utils/ui";
 import { ChangelogNotification } from "@/lib/changelog/components/changelog-notification";
-import { TemplateBrowser } from "@/components/templates/template-browser";
+import { TemplateLibraryDialog } from "@/components/templates/template-library-dialog";
 const formatProjectDuration = ({
 	duration,
 }: {
@@ -97,6 +97,7 @@ export default function ProjectsPage() {
 	const { searchQuery, sortKey, sortOrder, viewMode } = useProjectsStore();
 	const editor = useEditor();
 	const router = useRouter();
+	const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
 	const sortOption: TProjectSortOption = `${sortKey}-${sortOrder}`;
 
 	const isLoading = useEditor((e) => e.project.getIsLoading());
@@ -116,7 +117,13 @@ export default function ProjectsPage() {
 			<MigrationDialog />
 			<StoragePersistenceDialog />
 			<ChangelogNotification />
-			<ProjectsHeader />
+			<TemplateLibraryDialog
+				open={isTemplateDialogOpen}
+				onOpenChange={setIsTemplateDialogOpen}
+				kind="project"
+				onProjectCreated={(projectId) => router.push(`/editor/${projectId}`)}
+			/>
+			<ProjectsHeader onTemplateClick={() => setIsTemplateDialogOpen(true)} />
 			<ProjectsToolbar projectIds={projectsToDisplay.map((p) => p.id)} />
 			<main className="mx-auto px-4 pt-2 pb-6 flex flex-col gap-4">
 				{isLoading || !isInitialized ? (
@@ -140,19 +147,12 @@ export default function ProjectsPage() {
 						))}
 					</div>
 				)}
-				<div className="pt-4 md:pt-6">
-					<TemplateBrowser
-						onProjectCreated={(projectId) =>
-							router.push(`/editor/${projectId}`)
-						}
-					/>
-				</div>
 			</main>
 		</div>
 	);
 }
 
-function ProjectsHeader() {
+function ProjectsHeader({ onTemplateClick }: { onTemplateClick: () => void }) {
 	const t = useTranslations("pages.projects");
 	const { viewMode, isHydrated, setViewMode } = useProjectsStore();
 	const viewModeOptions = getViewModeOptions(t);
@@ -201,7 +201,7 @@ function ProjectsHeader() {
 
 				<div className="flex items-center gap-3 md:gap-4">
 					<SearchBar className="hidden md:block" />
-					<TemplateProjectButton />
+					<TemplateProjectButton onClick={onTemplateClick} />
 					<NewProjectButton />
 				</div>
 			</div>
@@ -555,18 +555,11 @@ function NewProjectButton() {
 	);
 }
 
-function TemplateProjectButton() {
+function TemplateProjectButton({ onClick }: { onClick: () => void }) {
 	const t = useTranslations("templates");
 
-	const scrollToTemplateBrowser = () => {
-		document.getElementById("template-browser")?.scrollIntoView({
-			behavior: "smooth",
-			block: "start",
-		});
-	};
-
 	return (
-		<Button size="lg" variant="outline" onClick={scrollToTemplateBrowser}>
+		<Button size="lg" variant="outline" onClick={onClick}>
 			{t("actions.fromTemplate")}
 		</Button>
 	);

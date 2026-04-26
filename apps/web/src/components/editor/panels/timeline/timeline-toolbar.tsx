@@ -43,6 +43,7 @@ import {
 	Layers01Icon,
 	Chart03Icon,
 	Unlink02Icon,
+	BlendIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { OcRippleIcon } from "@/components/icons";
@@ -185,9 +186,18 @@ function ToolbarLeftSection() {
 
 				<ToolbarButton
 					icon={<HugeiconsIcon icon={SnowIcon} />}
-					tooltip="Freeze frame (coming soon)"
-					disabled={true}
-					onClick={({ event: _event }) => {}}
+					tooltip="Freeze frame"
+					onClick={({ event }) =>
+						handleAction({ action: "freeze-frame", event })
+					}
+				/>
+
+				<ToolbarButton
+					icon={<HugeiconsIcon icon={BlendIcon} />}
+					tooltip="Apply fade transition"
+					onClick={({ event }) =>
+						handleAction({ action: "apply-fade-transition", event })
+					}
 				/>
 
 				<ToolbarButton

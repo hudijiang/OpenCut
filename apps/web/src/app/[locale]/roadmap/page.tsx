@@ -3,11 +3,12 @@ import { getTranslations } from "next-intl/server";
 import { BasePage } from "@/app/base-page";
 import { GitHubContributeSection } from "@/components/gitHub-contribute-section";
 import { Badge } from "@/components/ui/badge";
+import type { Locale } from "@/i18n/routing";
 import { ReactMarkdownWrapper } from "@/components/ui/react-markdown-wrapper";
 import { cn } from "@/utils/ui";
 
 type Props = {
-	params: Promise<{ locale: string }>;
+	params: Promise<{ locale: Locale }>;
 };
 
 type StatusType = "complete" | "pending" | "default" | "info";

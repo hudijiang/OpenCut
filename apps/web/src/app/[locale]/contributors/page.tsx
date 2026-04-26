@@ -4,11 +4,12 @@ import { Link } from "@/i18n/navigation";
 import { GitHubContributeSection } from "@/components/gitHub-contribute-section";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
+import type { Locale } from "@/i18n/routing";
 import { EXTERNAL_TOOLS } from "@/lib/site/external-tools";
 import { BasePage } from "../../base-page";
 
 type Props = {
-	params: Promise<{ locale: string }>;
+	params: Promise<{ locale: Locale }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

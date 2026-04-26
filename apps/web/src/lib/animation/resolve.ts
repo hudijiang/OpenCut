@@ -2,7 +2,6 @@ import type {
 	AnimationColorPropertyPath,
 	AnimationNumericPropertyPath,
 	AnimationPath,
-	AnimationPropertyPath,
 	AnimationValueForPath,
 	ElementAnimations,
 } from "@/lib/animation/types";
@@ -12,9 +11,7 @@ import {
 	composeAnimationValue,
 	decomposeAnimationValue,
 } from "./binding-values";
-import {
-	getChannelValueAtTime,
-} from "./interpolation";
+import { getChannelValueAtTime } from "./interpolation";
 
 export function getElementLocalTime({
 	timelineTime,

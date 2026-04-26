@@ -47,7 +47,8 @@ export async function alignAudioDuration(
 	const requiredPlaybackRate = sourceBuffer.duration / safeTargetDuration;
 
 	// Keep time-stretching within +/-30%; outside that range we render with the
-	// closest safe playback rate and then pad or truncate to the original slot.
+	// closest safe playback rate. Short audio is padded, while long audio keeps
+	// its full rendered length so translated speech is not cut off.
 	const appliedPlaybackRate = clamp(
 		requiredPlaybackRate,
 		MIN_STRETCH_RATE,
@@ -76,7 +77,7 @@ export async function alignAudioDuration(
 
 	const rendered = await offlineContext.startRendering();
 	const output = createEmptyAudioBuffer({
-		length: targetLength,
+		length: Math.max(targetLength, rendered.length),
 		sampleRate: sourceBuffer.sampleRate,
 		numberOfChannels: channelCount,
 	});
@@ -143,6 +144,44 @@ export async function buildDubbingAudioBuffer(
 	return output;
 }
 
+export async function buildAlignedDubbingSegmentFiles(
+	segments: SpeakerSegment[],
+): Promise<
+	Array<{ segment: SpeakerSegment; file: File; actualDurationSec: number }>
+> {
+	const files: Array<{
+		segment: SpeakerSegment;
+		file: File;
+		actualDurationSec: number;
+	}> = [];
+
+	for (const segment of segments) {
+		if (!segment.audioBlob) {
+			continue;
+		}
+
+		const decodedBuffer = await decodeBlobToAudioBuffer(segment.audioBlob);
+		const segmentDurationSec = Math.max(
+			0.001,
+			(segment.endTime - segment.startTime) / 1000,
+		);
+		const alignedBuffer = await alignAudioDuration(
+			decodedBuffer,
+			segmentDurationSec,
+		);
+		files.push({
+			segment,
+			actualDurationSec: alignedBuffer.duration,
+			file: audioBufferToMediaFile(
+				alignedBuffer,
+				`opencut-dubbed-${segment.id}.wav`,
+			),
+		});
+	}
+
+	return files;
+}
+
 export function audioBufferToWavBlob(buffer: AudioBuffer): Blob {
 	const channelCount = Math.max(
 		1,
@@ -185,9 +224,12 @@ export function audioBufferToWavBlob(buffer: AudioBuffer): Blob {
 	return new Blob([output], { type: "audio/wav" });
 }
 
-export function audioBufferToMediaFile(buffer: AudioBuffer): File {
+export function audioBufferToMediaFile(
+	buffer: AudioBuffer,
+	fileName = "opencut-dubbed-track.wav",
+): File {
 	const wavBlob = audioBufferToWavBlob(buffer);
-	return new File([wavBlob], "opencut-dubbed-track.wav", {
+	return new File([wavBlob], fileName, {
 		type: "audio/wav",
 		lastModified: Date.now(),
 	});

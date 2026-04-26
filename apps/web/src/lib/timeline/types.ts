@@ -9,6 +9,8 @@ export type ElementRef = {
 	elementId: string;
 };
 
+export type TimelineElementRole = "dubbing-output";
+
 export interface Bookmark {
 	time: number;
 	note?: string;
@@ -37,6 +39,7 @@ export interface VideoTrack extends BaseTrack {
 	type: "video";
 	elements: (VideoElement | ImageElement)[];
 	muted: boolean;
+	mutedByDubbing?: boolean;
 	hidden: boolean;
 }
 
@@ -50,6 +53,7 @@ export interface AudioTrack extends BaseTrack {
 	type: "audio";
 	elements: AudioElement[];
 	muted: boolean;
+	mutedByDubbing?: boolean;
 }
 
 export interface GraphicTrack extends BaseTrack {
@@ -84,6 +88,16 @@ export interface RetimeConfig {
 	maintainPitch?: boolean;
 }
 
+export interface FadeTransition {
+	type: "fade";
+	duration: number;
+}
+
+export interface ElementTransitions {
+	in?: FadeTransition;
+	out?: FadeTransition;
+}
+
 interface BaseAudioElement extends BaseTimelineElement {
 	type: "audio";
 	volume: number;
@@ -112,7 +126,9 @@ interface BaseTimelineElement {
 	trimStart: number;
 	trimEnd: number;
 	sourceDuration?: number;
+	role?: TimelineElementRole;
 	animations?: ElementAnimations;
+	transitions?: ElementTransitions;
 }
 
 export interface VideoElement extends BaseTimelineElement {

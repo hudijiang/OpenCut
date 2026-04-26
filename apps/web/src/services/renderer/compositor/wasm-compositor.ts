@@ -120,8 +120,24 @@ class WasmCompositor {
 	}
 
 	render(frame: FrameDescriptor) {
-		renderFrame(frame);
+		renderFrame(toWasmFrameDescriptor(frame));
 	}
 }
 
 export const wasmCompositor = new WasmCompositor();
+
+function toWasmFrameDescriptor(frame: FrameDescriptor) {
+	return {
+		...frame,
+		items: frame.items.map((item) => {
+			if (item.type !== "sceneEffect") {
+				return item;
+			}
+
+			return {
+				type: item.type,
+				effect_pass_groups: item.effectPassGroups,
+			};
+		}),
+	};
+}

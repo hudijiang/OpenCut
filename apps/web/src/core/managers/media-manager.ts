@@ -6,6 +6,13 @@ import { generateUUID } from "@/utils/id";
 import { videoCache } from "@/services/video-cache/service";
 import { waveformCache } from "@/services/waveform-cache/service";
 import { BatchCommand, RemoveMediaAssetCommand } from "@/lib/commands";
+import type { ProcessedMediaAsset } from "@/lib/media/processing";
+import type {
+	SceneTracks,
+	TimelineElement,
+	TimelineTrack,
+} from "@/lib/timeline";
+import { hasMediaId } from "@/lib/timeline/element-utils";
 
 export class MediaManager {
 	private assets: MediaAsset[] = [];
@@ -48,6 +55,56 @@ export class MediaManager {
 
 			return null;
 		}
+	}
+
+	async replaceMediaAsset({
+		projectId,
+		oldId,
+		asset,
+	}: {
+		projectId: string;
+		oldId: string;
+		asset: ProcessedMediaAsset;
+	}): Promise<MediaAsset | null> {
+		const existingAsset = this.assets.find(
+			(candidate) => candidate.id === oldId,
+		);
+		if (!existingAsset) {
+			toast.error("Media asset not found");
+			return null;
+		}
+		if (existingAsset.type !== asset.type) {
+			toast.error("Replacement must use the same media type");
+			return null;
+		}
+
+		const replacement = await this.addMediaAsset({ projectId, asset });
+		if (!replacement) {
+			return null;
+		}
+
+		const activeSceneId = this.editor.scenes.getActiveSceneOrNull()?.id;
+		const nextScenes = this.editor.scenes.getScenes().map((scene) => ({
+			...scene,
+			tracks: replaceMediaIdInTracks({
+				tracks: scene.tracks,
+				oldId,
+				newId: replacement.id,
+			}),
+			updatedAt: new Date(),
+		}));
+		this.editor.scenes.setScenes({ scenes: nextScenes, activeSceneId });
+
+		this.assets = this.assets.filter((candidate) => candidate.id !== oldId);
+		this.notify();
+
+		try {
+			await storageService.deleteMediaAsset({ projectId, id: oldId });
+		} catch (error) {
+			console.warn("Failed to delete replaced media asset:", error);
+		}
+
+		return replacement;
 	}
 
 	removeMediaAsset({ projectId, id }: { projectId: string; id: string }): void {
@@ -161,4 +218,47 @@ export class MediaManager {
 			fn();
 		});
 	}
+}
+
+function replaceMediaIdInTracks({
+	tracks,
+	oldId,
+	newId,
+}: {
+	tracks: SceneTracks;
+	oldId: string;
+	newId: string;
+}): SceneTracks {
+	const replaceTrack = <TTrack extends TimelineTrack>(track: TTrack): TTrack =>
+		({
+			...track,
+			elements: track.elements.map((element) =>
+				replaceMediaIdInElement({ element, oldId, newId }),
+			),
+		}) as TTrack;
+
+	return {
+		overlay: tracks.overlay.map((track) => replaceTrack(track)),
+		main: replaceTrack(tracks.main),
+		audio: tracks.audio.map((track) => replaceTrack(track)),
+	};
+}
+
+function replaceMediaIdInElement({
+	element,
+	oldId,
+	newId,
+}: {
+	element: TimelineElement;
+	oldId: string;
+	newId: string;
+}): TimelineElement {
+	if (!hasMediaId(element) || element.mediaId !== oldId) {
+		return element;
+	}
+
+	return {
+		...element,
+		mediaId: newId,
+	};
 }

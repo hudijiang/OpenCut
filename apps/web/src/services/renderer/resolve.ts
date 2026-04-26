@@ -15,6 +15,7 @@ import { effectsRegistry, resolveEffectPasses } from "@/lib/effects";
 import type { Effect, EffectPass } from "@/lib/effects/types";
 import { getSourceTimeAtClipTime } from "@/lib/retime";
 import { DEFAULT_GRAPHIC_SOURCE_SIZE } from "@/lib/graphics";
+import { getTransitionOpacityMultiplier } from "@/lib/timeline";
 import {
 	getTextMeasurementContext,
 	measureTextElement,
@@ -27,7 +28,10 @@ import {
 	type BackdropSource,
 	type ResolvedBlurBackgroundNodeState,
 } from "./nodes/blur-background-node";
-import { EffectLayerNode, type ResolvedEffectLayerNodeState } from "./nodes/effect-layer-node";
+import {
+	EffectLayerNode,
+	type ResolvedEffectLayerNodeState,
+} from "./nodes/effect-layer-node";
 import {
 	GraphicNode,
 	type ResolvedGraphicNodeState,
@@ -99,12 +103,14 @@ function resolveEffectPassGroups({
 	localTime,
 	width,
 	height,
+	duration,
 }: {
 	effects: Effect[] | undefined;
 	animations: VisualNodeParams["animations"];
 	localTime: number;
 	width: number;
 	height: number;
+	duration: number;
 }): EffectPass[][] {
 	return (effects ?? [])
 		.filter((effect) => effect.enabled)
@@ -121,6 +127,7 @@ function resolveEffectPassGroups({
 				width,
 				height,
 				localTime,
+				duration,
 			});
 		});
 }
@@ -151,11 +158,17 @@ function resolveVisualState({
 		animations: params.animations,
 		localTime,
 	});
-	const opacity = resolveOpacityAtTime({
-		baseOpacity: params.opacity,
-		animations: params.animations,
-		localTime,
-	});
+	const opacity =
+		resolveOpacityAtTime({
+			baseOpacity: params.opacity,
+			animations: params.animations,
+			localTime,
+		}) *
+		getTransitionOpacityMultiplier({
+			transitions: params.transitions,
+			localTime,
+			duration: params.duration,
+		});
 	const containScale = Math.min(
 		context.renderer.width / sourceWidth,
 		context.renderer.height / sourceHeight,
@@ -177,6 +190,7 @@ function resolveVisualState({
 			localTime,
 			width: effectWidth,
 			height: effectHeight,
+			duration: params.duration,
 		}),
 	};
 }
@@ -233,7 +247,10 @@ async function resolveImageNode({
 	node: ImageNode;
 	context: ResolveContext;
 }): Promise<ResolvedVisualSourceNodeState | null> {
-	const source = await loadImageSource(node.params.url, node.params.maxSourceSize);
+	const source = await loadImageSource(
+		node.params.url,
+		node.params.maxSourceSize,
+	);
 	const visualState = resolveVisualState({
 		params: node.params,
 		context,
@@ -332,11 +349,17 @@ function resolveTextNode({
 			animations: node.params.animations,
 			localTime,
 		}),
-		opacity: resolveOpacityAtTime({
-			baseOpacity: node.params.opacity,
-			animations: node.params.animations,
-			localTime,
-		}),
+		opacity:
+			resolveOpacityAtTime({
+				baseOpacity: node.params.opacity,
+				animations: node.params.animations,
+				localTime,
+			}) *
+			getTransitionOpacityMultiplier({
+				transitions: node.params.transitions,
+				localTime,
+				duration: node.params.duration,
+			}),
 		textColor: resolveColorAtTime({
 			baseColor: node.params.color,
 			animations: node.params.animations,
@@ -355,6 +378,7 @@ function resolveTextNode({
 			localTime,
 			width: context.renderer.width,
 			height: context.renderer.height,
+			duration: node.params.duration,
 		}),
 		measuredText: measureTextElement({
 			element: node.params,
@@ -459,6 +483,7 @@ function resolveEffectLayerNode({
 		width: context.renderer.width,
 		height: context.renderer.height,
 		localTime: time - node.params.timeOffset,
+		duration: node.params.duration,
 	});
 	if (passes.length === 0) {
 		return null;

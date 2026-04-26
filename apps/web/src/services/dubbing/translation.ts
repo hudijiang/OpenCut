@@ -1,14 +1,12 @@
 import { z } from "zod";
 import type { SpeakerSegment } from "@/lib/dubbing/types";
 
-const OPENAI_CHAT_COMPLETIONS_URL =
-	"https://api.openai.com/v1/chat/completions";
+const DEEPSEEK_CHAT_COMPLETIONS_URL =
+	"https://api.deepseek.com/chat/completions";
 const TRANSLATION_BATCH_SIZE = 20;
-// GPT-4o-mini is the best fit here because it is reliable for structured JSON
-// output while staying roughly an order of magnitude cheaper than GPT-4o.
-const TRANSLATION_MODEL = "gpt-4o-mini";
+const TRANSLATION_MODEL = "deepseek-v4-flash";
 
-const openAiResponseSchema = z.object({
+const deepSeekResponseSchema = z.object({
 	choices: z
 		.array(
 			z.object({
@@ -49,21 +47,21 @@ async function parseErrorResponse(response: Response): Promise<string> {
 		});
 		const parsed = schema.safeParse(data);
 		if (!parsed.success) {
-			return `OpenAI request failed with status ${response.status}`;
+			return `DeepSeek request failed with status ${response.status}`;
 		}
 		return (
 			parsed.data.error?.message ??
 			parsed.data.message ??
-			`OpenAI request failed with status ${response.status}`
+			`DeepSeek request failed with status ${response.status}`
 		);
 	} catch {
-		return `OpenAI request failed with status ${response.status}`;
+		return `DeepSeek request failed with status ${response.status}`;
 	}
 }
 
 function assertApiKey(apiKey: string): void {
 	if (apiKey.trim().length === 0) {
-		throw new TranslationServiceError("OpenAI API key is required");
+		throw new TranslationServiceError("DeepSeek API key is required");
 	}
 }
 
@@ -101,7 +99,7 @@ async function translateBatch({
 	targetLanguage: string;
 	apiKey: string;
 }): Promise<SpeakerSegment[]> {
-	const response = await fetch(OPENAI_CHAT_COMPLETIONS_URL, {
+	const response = await fetch(DEEPSEEK_CHAT_COMPLETIONS_URL, {
 		method: "POST",
 		headers: {
 			authorization: `Bearer ${apiKey}`,
@@ -132,18 +130,18 @@ async function translateBatch({
 	}
 
 	const completionData: unknown = await response.json();
-	const completion = openAiResponseSchema.parse(completionData);
+	const completion = deepSeekResponseSchema.parse(completionData);
 	const content = completion.choices[0]?.message.content;
 
 	if (!content) {
-		throw new TranslationServiceError("OpenAI returned an empty translation");
+		throw new TranslationServiceError("DeepSeek returned an empty translation");
 	}
 
 	let parsedContent: unknown;
 	try {
 		parsedContent = JSON.parse(content);
 	} catch {
-		throw new TranslationServiceError("OpenAI returned invalid JSON");
+		throw new TranslationServiceError("DeepSeek returned invalid JSON");
 	}
 
 	const translationPayload = translationPayloadSchema.parse(parsedContent);
